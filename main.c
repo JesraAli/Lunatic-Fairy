@@ -30,6 +30,7 @@ typedef struct{
     int x_vel;
     int y_vel;
     int health;
+    SDL_Texture *tex
 } Entity;
 
 
@@ -37,15 +38,10 @@ typedef struct{
 SDL_Window *win;
 SDL_Renderer *rend;
 SDL_Surface *surface;
-SDL_Texture *tex;
 
-    Entity player;
-    Action action;
+Entity player,bullet;
+Action action;
 
-
-
-//int up, down, left, right,fire;
-//float x_vel, y_vel, x_pos, y_pos;
 
 void load(){
 
@@ -79,40 +75,44 @@ void load(){
         return 1;
     }        
 
-    //Load image into memory
-    surface = IMG_Load("sprite.png");
-    if(!surface){
-        printf("Error creating surface\n");
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(win);
-        SDL_Quit();
-        return 1;
-    }
+    // //Load image into memory
+    // surface = IMG_Load("sprite.png");
+    // if(!surface){
+    //     printf("Error creating surface\n");
+    //     SDL_DestroyRenderer(rend);
+    //     SDL_DestroyWindow(win);
+    //     SDL_Quit();
+    //     return 1;
+    // }
     
 
-    //Load image data into graphics hardware memory
-    tex = SDL_CreateTextureFromSurface(rend, surface);
-    SDL_FreeSurface(surface);
-    if(!tex){
-        printf("Error creating texture: %s\n",SDL_GetError());
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(win);
-        SDL_Quit();
-        return 1;
-    }
+    // //Load image data into graphics hardware memory
+    // tex = SDL_CreateTextureFromSurface(rend, surface);
+    // SDL_FreeSurface(surface);
+    // if(!tex){
+    //     printf("Error creating texture: %s\n",SDL_GetError());
+    //     SDL_DestroyRenderer(rend);
+    //     SDL_DestroyWindow(win);
+    //     SDL_Quit();
+    //     return 1;
+    // }
 }
 
 
 int main(int argc, char **argv){
+    
     load();
 
     SDL_Rect dest;  //Struct: holds position, sprite size & its destination on screen
     action.up=action.down=action.left=action.right=0;
 
+    player.tex = IMG_LoadTexture(rend,"sprite.png"); //Create texture for player
+    bullet.tex = IMG_LoadTexture(rend,"bullet.png");
+
     // //Get & Scale dimensions of texture:
-    SDL_QueryTexture(tex, NULL, NULL, &dest.w, &dest.h);
-    dest.w /= 6; //scales image down by 4
-    dest.h /= 6;
+    SDL_QueryTexture(player.tex, NULL, NULL, &dest.w, &dest.h);
+    dest.w += 15; //scales image up
+    dest.h += 15;
 
     //Sprite in centre of screen at start
      player.x_pos = (WINDOW_WIDTH - dest.w) / 2;
@@ -139,9 +139,30 @@ int main(int argc, char **argv){
         dest.y = (int) player.y_pos;
         dest.x = (int) player.x_pos;
 
+
+        if(action.fire && bullet.health == 0){
+            bullet.x_pos = player.x_pos + 50;
+            bullet.y_pos = player.y_pos + 50;
+            bullet.health = 1;
+        }
+        if(bullet.x_pos > WINDOW_WIDTH){
+            bullet.health = 0;
+        }
+
         
         // Present Scene: draw the image to the window
-        SDL_RenderCopy(rend, tex, NULL, &dest);
+        //blit(player.tex, player.x_pos, player.y_pos);
+        SDL_RenderCopy(rend, player.tex, NULL, &dest);
+
+        // SDL_RenderCopy(rend, bullet.tex, NULL, &dest);
+        // SDL_RenderPresent(rend);
+
+        //blit(bullet.tex, bullet.x_pos, bullet.y_pos);
+
+        if(bullet.health > 0){
+            SDL_RenderCopy(rend, bullet.tex, NULL, &dest);
+        }
+
         SDL_RenderPresent(rend);
 
         SDL_Delay(1000/60); // wait 1/60th of a second
@@ -212,6 +233,7 @@ void doInput(){
             break;
         }
     }
+
     //determine velocity of keyboard input
     player.x_vel = player.y_vel = 0;
     if(action.up && !action.down) player.y_vel = -SPEED; //if up pressed & NOT down, == negative (==up)
@@ -222,7 +244,6 @@ void doInput(){
     //update positions (divide by 60 as only  calculating 1/60th of a second)
     player.x_pos += player.x_vel / 60;
     player.y_pos += player.y_vel / 60;
-
 }
 
 void prepareScene(){
@@ -232,9 +253,18 @@ void prepareScene(){
 
 void end(){
     //Clean up all initialised subsystems:
-    SDL_DestroyTexture(tex);
+    SDL_DestroyTexture(player.tex);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);
     SDL_Quit();
     return 0;
 }
+
+// void blit(SDL_Texture *tex, int x, int y){ //draws texture on screen at (x,y) coords
+
+//     SDL_Rect dest;
+//     dest.x = x;
+//     dest.y =y;
+//     SDL_QueryTexture(tex, NULL, NULL, &dest.w, &dest.h);
+//     SDL_RenderCopy(rend, tex, NULL, &dest);
+// }

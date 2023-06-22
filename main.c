@@ -1,9 +1,8 @@
-/*gcc main.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm*/
 
 //Scancodes: Suited for layout-depended WASD/ARROW keys
 //Keycodes: Suited for character-dependent controlls (e.g: I for inventory)
 
-#include "SDL2/SDL.h"
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_image.h>
 #include <stdio.h>
@@ -94,7 +93,7 @@ int main(int argc, char **argv){
     //Sprite in centre of screen at start
      x_pos = (WINDOW_WIDTH - dest.w) / 2;
      y_pos = (WINDOW_HEIGHT - dest.h) / 2;
-     
+
     //Initial sprite velocity 0 (because keyboard controls it)
      x_vel = 0; 
      y_vel = 0;

@@ -20,7 +20,7 @@ SDL_Renderer *rend;
 SDL_Surface *surface;
 SDL_Texture *tex;
 
-int up, down, left, right;
+int up, down, left, right,fire;
 float x_vel, y_vel, x_pos, y_pos;
 
 void load(){
@@ -153,10 +153,11 @@ void doInput(){
             case SDL_SCANCODE_DOWN:
                 down = 1;
                 break;
-            case SDL_SCANCODE_D:
-            case SDL_SCANCODE_RIGHT:
+            case SDLK_d:
                 right = 1;
                 break;
+            case SDLK_z:
+                fire = 1;
             }
             break;
         case SDL_KEYUP:

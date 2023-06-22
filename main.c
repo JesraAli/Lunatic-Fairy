@@ -14,14 +14,38 @@
 #define SCROLL_SPEED (300) //Speed in pixels per second
 #define SPEED (300)
 
+//Structs
+typedef struct{
+    int up;
+    int down;
+    int left;
+    int right;
+    int fire;
+    
+} Action;
+
+typedef struct{
+    int x_pos;
+    int y_pos;
+    int x_vel;
+    int y_vel;
+    int health;
+} Entity;
+
+
 //Variables
 SDL_Window *win;
 SDL_Renderer *rend;
 SDL_Surface *surface;
 SDL_Texture *tex;
 
-int up, down, left, right,fire;
-float x_vel, y_vel, x_pos, y_pos;
+    Entity player;
+    Action action;
+
+
+
+//int up, down, left, right,fire;
+//float x_vel, y_vel, x_pos, y_pos;
 
 void load(){
 
@@ -83,7 +107,7 @@ int main(int argc, char **argv){
     load();
 
     SDL_Rect dest;  //Struct: holds position, sprite size & its destination on screen
-    up=down=left=right=0;
+    action.up=action.down=action.left=action.right=0;
 
     // //Get & Scale dimensions of texture:
     SDL_QueryTexture(tex, NULL, NULL, &dest.w, &dest.h);
@@ -91,12 +115,12 @@ int main(int argc, char **argv){
     dest.h /= 6;
 
     //Sprite in centre of screen at start
-     x_pos = (WINDOW_WIDTH - dest.w) / 2;
-     y_pos = (WINDOW_HEIGHT - dest.h) / 2;
+     player.x_pos = (WINDOW_WIDTH - dest.w) / 2;
+     player.y_pos = (WINDOW_HEIGHT - dest.h) / 2;
 
     //Initial sprite velocity 0 (because keyboard controls it)
-     x_vel = 0; 
-     y_vel = 0;
+     player.x_vel = 0; 
+     player.y_vel = 0;
 
     while (1){
 
@@ -105,15 +129,15 @@ int main(int argc, char **argv){
         doInput();
         
         //collision detected with bounds (detect if sprite is going out of  window)
-        if (x_pos <= 0) x_pos = 0; //reset positions to keep in window
-        if (y_pos <= 0) y_pos = 0;
-        if (x_pos >= WINDOW_WIDTH - dest.w) x_pos = WINDOW_WIDTH - dest.w;
-        if (y_pos >= WINDOW_HEIGHT - dest.h) y_pos = WINDOW_HEIGHT - dest.h;
+        if (player.x_pos <= 0) player.x_pos = 0; //reset positions to keep in window
+        if (player.y_pos <= 0) player.y_pos = 0;
+        if (player.x_pos >= WINDOW_WIDTH - dest.w) player.x_pos = WINDOW_WIDTH - dest.w;
+        if (player.y_pos >= WINDOW_HEIGHT - dest.h) player.y_pos = WINDOW_HEIGHT - dest.h;
 
 
         // set the positions in the struct
-        dest.y = (int) y_pos;
-        dest.x = (int) x_pos;
+        dest.y = (int) player.y_pos;
+        dest.x = (int) player.x_pos;
 
         
         // Present Scene: draw the image to the window
@@ -143,21 +167,23 @@ void doInput(){
             {
             case SDL_SCANCODE_W:
             case SDL_SCANCODE_UP:
-                up = 1;
+                action.up = 1;
                 break;
             case SDL_SCANCODE_A:
             case SDL_SCANCODE_LEFT:
-                left = 1;
+                action.left = 1;
                 break;
             case SDL_SCANCODE_S:
             case SDL_SCANCODE_DOWN:
-                down = 1;
+                action.down = 1;
                 break;
-            case SDLK_d:
-                right = 1;
+            case SDL_SCANCODE_D:
+            case SDL_SCANCODE_RIGHT:
+                action.right = 1;
                 break;
-            case SDLK_z:
-                fire = 1;
+            case SDL_SCANCODE_Z:
+                action.fire = 1;
+                break;
             }
             break;
         case SDL_KEYUP:
@@ -165,34 +191,37 @@ void doInput(){
             {
             case SDL_SCANCODE_W:
             case SDL_SCANCODE_UP:
-                up = 0;
+                action.up = 0;
                 break;
             case SDL_SCANCODE_A:
             case SDL_SCANCODE_LEFT:
-                left = 0;
+                action.left = 0;
                 break;
             case SDL_SCANCODE_S:
             case SDL_SCANCODE_DOWN:
-                down = 0;
+                action.down = 0;
                 break;
             case SDL_SCANCODE_D:
             case SDL_SCANCODE_RIGHT:
-                right = 0;
+                action.right = 0;
+                break;
+            case SDL_SCANCODE_Z:
+                action.fire = 0;
                 break;
             }
             break;
         }
     }
     //determine velocity of keyboard input
-    x_vel = y_vel = 0;
-    if(up && !down) y_vel = -SPEED; //if up pressed & NOT down, == negative (==up)
-    if (down && !up) y_vel = SPEED; //(positive == down)
-    if(left && !right) x_vel = -SPEED;
-    if (right && !left) x_vel = SPEED;
+    player.x_vel = player.y_vel = 0;
+    if(action.up && !action.down) player.y_vel = -SPEED; //if up pressed & NOT down, == negative (==up)
+    if (action.down && !action.up) player.y_vel = SPEED; //(positive == down)
+    if(action.left && !action.right) player.x_vel = -SPEED;
+    if (action.right && !action.left) player.x_vel = SPEED;
 
     //update positions (divide by 60 as only  calculating 1/60th of a second)
-    x_pos += x_vel / 60;
-    y_pos += y_vel / 60;
+    player.x_pos += player.x_vel / 60;
+    player.y_pos += player.y_vel / 60;
 
 }
 

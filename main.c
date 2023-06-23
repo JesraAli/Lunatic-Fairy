@@ -27,12 +27,19 @@ typedef struct{
 typedef struct{
     int x_pos;
     int y_pos;
-    int x_vel;
-    int y_vel;
+    float x_vel;
+    float y_vel;
     int health;
-    SDL_Texture *tex
+    SDL_Texture *tex;
+    SDL_Rect dest;
 } Entity;
 
+//Function Declarations
+int load(void);
+void doInput(void);
+void prepareScene(void);
+int end(void);
+ 
 
 //Variables
 SDL_Window *win;
@@ -43,7 +50,7 @@ Entity player,bullet;
 Action action;
 
 
-void load(){
+int load(){
 
     //Initialise SDL Subsystems
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) != 0){
@@ -74,28 +81,6 @@ void load(){
         SDL_Quit;
         return 1;
     }        
-
-    // //Load image into memory
-    // surface = IMG_Load("sprite.png");
-    // if(!surface){
-    //     printf("Error creating surface\n");
-    //     SDL_DestroyRenderer(rend);
-    //     SDL_DestroyWindow(win);
-    //     SDL_Quit();
-    //     return 1;
-    // }
-    
-
-    // //Load image data into graphics hardware memory
-    // tex = SDL_CreateTextureFromSurface(rend, surface);
-    // SDL_FreeSurface(surface);
-    // if(!tex){
-    //     printf("Error creating texture: %s\n",SDL_GetError());
-    //     SDL_DestroyRenderer(rend);
-    //     SDL_DestroyWindow(win);
-    //     SDL_Quit();
-    //     return 1;
-    // }
 }
 
 
@@ -103,24 +88,39 @@ int main(int argc, char **argv){
     
     load();
 
-    SDL_Rect dest;  //Struct: holds position, sprite size & its destination on screen
+    //initSprite(player, "sprite.png", 15);
+
     action.up=action.down=action.left=action.right=0;
 
     player.tex = IMG_LoadTexture(rend,"sprite.png"); //Create texture for player
-    bullet.tex = IMG_LoadTexture(rend,"bullet.png");
 
     // //Get & Scale dimensions of texture:
-    SDL_QueryTexture(player.tex, NULL, NULL, &dest.w, &dest.h);
-    dest.w += 15; //scales image up
-    dest.h += 15;
+    SDL_QueryTexture(player.tex, NULL, NULL, &player.dest.w, &player.dest.h);
+    player.dest.w += 15; //scales image up
+    player.dest.h += 15;
 
     //Sprite in centre of screen at start
-     player.x_pos = (WINDOW_WIDTH - dest.w) / 2;
-     player.y_pos = (WINDOW_HEIGHT - dest.h) / 2;
+     player.x_pos = (WINDOW_WIDTH - player.dest.w) / 2;
+     player.y_pos = (WINDOW_HEIGHT - player.dest.h) / 2;
 
     //Initial sprite velocity 0 (because keyboard controls it)
      player.x_vel = 0; 
      player.y_vel = 0;
+
+    //bullet 
+    bullet.tex = IMG_LoadTexture(rend,"bullet.png");
+    SDL_QueryTexture(bullet.tex, NULL, NULL, &bullet.dest.w, &bullet.dest.h);
+    bullet.dest.w += 15; //scales image up
+    bullet.dest.h += 15;
+
+    //Sprite in centre of screen at start
+     bullet.x_pos = (WINDOW_WIDTH - bullet.dest.w) / 2;
+     bullet.y_pos = (WINDOW_HEIGHT - bullet.dest.h) / 2;
+
+    //Initial sprite velocity 0 (because keyboard controls it)
+     bullet.x_vel = 0; 
+     bullet.y_vel = 0;
+
 
     while (1){
 
@@ -131,20 +131,29 @@ int main(int argc, char **argv){
         //collision detected with bounds (detect if sprite is going out of  window)
         if (player.x_pos <= 0) player.x_pos = 0; //reset positions to keep in window
         if (player.y_pos <= 0) player.y_pos = 0;
-        if (player.x_pos >= WINDOW_WIDTH - dest.w) player.x_pos = WINDOW_WIDTH - dest.w;
-        if (player.y_pos >= WINDOW_HEIGHT - dest.h) player.y_pos = WINDOW_HEIGHT - dest.h;
+        if (player.x_pos >= WINDOW_WIDTH - player.dest.w) player.x_pos = WINDOW_WIDTH - player.dest.w;
+        if (player.y_pos >= WINDOW_HEIGHT - player.dest.h) player.y_pos = WINDOW_HEIGHT - player.dest.h;
 
 
         // set the positions in the struct
-        dest.y = (int) player.y_pos;
-        dest.x = (int) player.x_pos;
+        player.dest.y = (int) player.y_pos;
+        player.dest.x = (int) player.x_pos;
 
 
         if(action.fire && bullet.health == 0){
-            bullet.x_pos = player.x_pos + 50;
-            bullet.y_pos = player.y_pos + 50;
+            bullet.x_pos = player.x_pos;
+            bullet.y_pos = player.y_pos;
+   
             bullet.health = 1;
         }
+
+        bullet.x_pos += bullet.x_vel / 60;
+        bullet.y_pos += bullet.y_vel / 60;
+
+        // set the positions in the struct
+        bullet.dest.y = (int) bullet.y_pos;
+        bullet.dest.x = (int) bullet.x_pos;
+
         if(bullet.x_pos > WINDOW_WIDTH){
             bullet.health = 0;
         }
@@ -152,7 +161,7 @@ int main(int argc, char **argv){
         
         // Present Scene: draw the image to the window
         //blit(player.tex, player.x_pos, player.y_pos);
-        SDL_RenderCopy(rend, player.tex, NULL, &dest);
+        SDL_RenderCopy(rend, player.tex, NULL, &player.dest);
 
         // SDL_RenderCopy(rend, bullet.tex, NULL, &dest);
         // SDL_RenderPresent(rend);
@@ -160,12 +169,13 @@ int main(int argc, char **argv){
         //blit(bullet.tex, bullet.x_pos, bullet.y_pos);
 
         if(bullet.health > 0){
-            SDL_RenderCopy(rend, bullet.tex, NULL, &dest);
+            SDL_RenderCopy(rend, bullet.tex, NULL, &bullet.dest);
         }
 
         SDL_RenderPresent(rend);
 
         SDL_Delay(1000/60); // wait 1/60th of a second
+
     }
 
     end();
@@ -251,7 +261,7 @@ void prepareScene(){
         SDL_RenderClear(rend);
 }
 
-void end(){
+int end(){
     //Clean up all initialised subsystems:
     SDL_DestroyTexture(player.tex);
     SDL_DestroyRenderer(rend);
@@ -259,6 +269,26 @@ void end(){
     SDL_Quit();
     return 0;
 }
+
+
+// void initSprite(Entity sprite, char *filename, int scale){
+
+//     sprite.tex = IMG_LoadTexture(rend,*filename); //Create texture for player
+
+//     // //Get & Scale dimensions of texture:
+//     SDL_QueryTexture(sprite.tex, NULL, NULL, &sprite.dest.w, &sprite.dest.h);
+//     sprite.dest.w += scale; //scales image up
+//     sprite.dest.h += scale;
+
+//     //Sprite in centre of screen at start
+//      sprite.x_pos = (WINDOW_WIDTH - sprite.dest.w) / 2;
+//      sprite.y_pos = (WINDOW_HEIGHT - sprite.dest.h) / 2;
+
+//     //Initial sprite velocity 0 (because keyboard controls it)
+//      sprite.x_vel = 0; 
+//      sprite.y_vel = 0;
+// }
+
 
 // void blit(SDL_Texture *tex, int x, int y){ //draws texture on screen at (x,y) coords
 

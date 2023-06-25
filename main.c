@@ -1,7 +1,3 @@
-
-//Scancodes: Suited for layout-depended WASD/ARROW keys
-//Keycodes: Suited for character-dependent controlls (e.g: I for inventory)
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_image.h>
@@ -92,8 +88,9 @@ int main(int argc, char **argv){
 
     action.up=action.down=action.left=action.right=0;
 
-    player.tex = IMG_LoadTexture(rend,"sprite.png"); //Create texture for player
 
+    //player
+    player.tex = IMG_LoadTexture(rend,"sprite.png"); //Create texture for player
     // //Get & Scale dimensions of texture:
     SDL_QueryTexture(player.tex, NULL, NULL, &player.dest.w, &player.dest.h);
     player.dest.w += 15; //scales image up
@@ -106,6 +103,7 @@ int main(int argc, char **argv){
     //Initial sprite velocity 0 (because keyboard controls it)
      player.x_vel = 0; 
      player.y_vel = 0;
+     
 
     //bullet 
     bullet.tex = IMG_LoadTexture(rend,"bullet.png");
@@ -140,9 +138,11 @@ int main(int argc, char **argv){
         player.dest.x = (int) player.x_pos;
 
 
-        if(action.fire && bullet.health == 0){
+        if(action.fire && bullet.health == 0){ //when bullet health is 0, decrease SPEED (because we want it going UP The screen)
             bullet.x_pos = player.x_pos;
             bullet.y_pos = player.y_pos;
+            bullet.x_vel = 0; 
+            bullet.y_vel = -SPEED;
    
             bullet.health = 1;
         }
@@ -154,19 +154,15 @@ int main(int argc, char **argv){
         bullet.dest.y = (int) bullet.y_pos;
         bullet.dest.x = (int) bullet.x_pos;
 
-        if(bullet.x_pos > WINDOW_WIDTH){
-            bullet.health = 0;
+        //printf("bullet position is: %d\n", bullet.y_pos);
+
+        if(bullet.y_pos < -10){ //If bullet goes beyond the top of the screen!
+            bullet.health = 0; //reset bullet health to 0
         }
 
         
         // Present Scene: draw the image to the window
-        //blit(player.tex, player.x_pos, player.y_pos);
         SDL_RenderCopy(rend, player.tex, NULL, &player.dest);
-
-        // SDL_RenderCopy(rend, bullet.tex, NULL, &dest);
-        // SDL_RenderPresent(rend);
-
-        //blit(bullet.tex, bullet.x_pos, bullet.y_pos);
 
         if(bullet.health > 0){
             SDL_RenderCopy(rend, bullet.tex, NULL, &bullet.dest);
@@ -287,14 +283,4 @@ int end(){
 //     //Initial sprite velocity 0 (because keyboard controls it)
 //      sprite.x_vel = 0; 
 //      sprite.y_vel = 0;
-// }
-
-
-// void blit(SDL_Texture *tex, int x, int y){ //draws texture on screen at (x,y) coords
-
-//     SDL_Rect dest;
-//     dest.x = x;
-//     dest.y =y;
-//     SDL_QueryTexture(tex, NULL, NULL, &dest.w, &dest.h);
-//     SDL_RenderCopy(rend, tex, NULL, &dest);
 // }

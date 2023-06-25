@@ -25,7 +25,7 @@ typedef struct{
     int y_pos;
     float x_vel;
     float y_vel;
-    int health;
+    int life;
     SDL_Texture *tex;
     SDL_Rect dest;
 } Entity;
@@ -138,13 +138,13 @@ int main(int argc, char **argv){
         player.dest.x = (int) player.x_pos;
 
 
-        if(action.fire && bullet.health == 0){ //when bullet health is 0, decrease SPEED (because we want it going UP The screen)
+        if(action.fire && bullet.life == 0){ //when bullet life is 0, decrease SPEED (because we want it going UP The screen)
             bullet.x_pos = player.x_pos;
             bullet.y_pos = player.y_pos;
             bullet.x_vel = 0; 
             bullet.y_vel = -SPEED;
    
-            bullet.health = 1;
+            bullet.life = 1;
         }
 
         bullet.x_pos += bullet.x_vel / 60;
@@ -157,14 +157,14 @@ int main(int argc, char **argv){
         //printf("bullet position is: %d\n", bullet.y_pos);
 
         if(bullet.y_pos < -10){ //If bullet goes beyond the top of the screen!
-            bullet.health = 0; //reset bullet health to 0
+            bullet.life = 0; //reset bullet life to 0
         }
 
         
         // Present Scene: draw the image to the window
         SDL_RenderCopy(rend, player.tex, NULL, &player.dest);
 
-        if(bullet.health > 0){
+        if(bullet.life > 0){
             SDL_RenderCopy(rend, bullet.tex, NULL, &bullet.dest);
         }
 

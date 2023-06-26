@@ -26,6 +26,7 @@ typedef struct{
     float x_vel;
     float y_vel;
     int life;
+    int reload;
     SDL_Texture *tex;
     SDL_Rect dest;
     struct Entity *next; //For next Entity in linked list
@@ -51,7 +52,7 @@ SDL_Window *win;
 SDL_Renderer *rend;
 SDL_Surface *surface;
 
-Entity *player,bullet;
+Entity *player, *bullet;
 Action action;
 Stage stage;
 
@@ -99,18 +100,18 @@ int main(int argc, char **argv){
     action.up=action.down=action.left=action.right=0;
      
     //bullet 
-    bullet.tex = IMG_LoadTexture(rend,"bullet.png");
-    SDL_QueryTexture(bullet.tex, NULL, NULL, &bullet.dest.w, &bullet.dest.h);
-    bullet.dest.w += 15; //scales image up
-    bullet.dest.h += 15;
+    bullet->tex = IMG_LoadTexture(rend,"bullet->png");
+    SDL_QueryTexture(bullet->tex, NULL, NULL, &bullet->dest.w, &bullet->dest.h);
+    bullet->dest.w += 15; //scales image up
+    bullet->dest.h += 15;
 
     //Sprite in centre of screen at start
-     bullet.x_pos = (WINDOW_WIDTH - bullet.dest.w) / 2;
-     bullet.y_pos = (WINDOW_HEIGHT - bullet.dest.h) / 2;
+     bullet->x_pos = (WINDOW_WIDTH - bullet->dest.w) / 2;
+     bullet->y_pos = (WINDOW_HEIGHT - bullet->dest.h) / 2;
 
     //Initial sprite velocity 0 (because keyboard controls it)
-     bullet.x_vel = 0; 
-     bullet.y_vel = 0;
+     bullet->x_vel = 0; 
+     bullet->y_vel = 0;
 
 
     while (1){
@@ -131,34 +132,29 @@ int main(int argc, char **argv){
         player->dest.x = (int) player->x_pos;
 
 
-        if(action.fire && bullet.life == 0){ //when bullet life is 0, decrease SPEED (because we want it going UP The screen)
-            bullet.x_pos = player->x_pos;
-            bullet.y_pos = player->y_pos;
-            bullet.x_vel = 0; 
-            bullet.y_vel = -SPEED;
-   
-            bullet.life = 1;
+        if(action.fire && player->reload == 0){ //when bullet life is 0, decrease SPEED (because we want it going UP The screen)
+            firebullet();
         }
 
-        bullet.x_pos += bullet.x_vel / 60;
-        bullet.y_pos += bullet.y_vel / 60;
+        bullet->x_pos += bullet->x_vel / 60;
+        bullet->y_pos += bullet->y_vel / 60;
 
         // set the positions in the struct
-        bullet.dest.y = (int) bullet.y_pos;
-        bullet.dest.x = (int) bullet.x_pos;
+        bullet->dest.y = (int) bullet->y_pos;
+        bullet->dest.x = (int) bullet->x_pos;
 
-        //printf("bullet position is: %d\n", bullet.y_pos);
+        //printf("bullet position is: %d\n", bullet->y_pos);
 
-        if(bullet.y_pos < -10){ //If bullet goes beyond the top of the screen!
-            bullet.life = 0; //reset bullet life to 0
+        if(bullet->y_pos < -10){ //If bullet goes beyond the top of the screen!
+            bullet->life = 0; //reset bullet life to 0
         }
 
         
         // Present Scene: draw the image to the window
         SDL_RenderCopy(rend, player->tex, NULL, &player->dest);
 
-        if(bullet.life > 0){
-            SDL_RenderCopy(rend, bullet.tex, NULL, &bullet.dest);
+        if(bullet->life > 0){
+            SDL_RenderCopy(rend, bullet->tex, NULL, &bullet->dest);
         }
 
         SDL_RenderPresent(rend);
@@ -289,4 +285,34 @@ void initPlayer(){
      player->x_vel = 0; 
      player->y_vel = 0;
 
+}
+
+
+void fireBullet(void){
+
+    bullet = malloc(sizeof(Entity));
+
+    //bullet 
+    bullet->tex = IMG_LoadTexture(rend,"bullet->png");
+    SDL_QueryTexture(bullet->tex, NULL, NULL, &bullet->dest.w, &bullet->dest.h);
+    bullet->dest.w += 15; //scales image up
+    bullet->dest.h += 15;
+
+    // //Sprite in centre of screen at start
+    //  bullet->x_pos = (WINDOW_WIDTH - bullet->dest.w) / 2;
+    //  bullet->y_pos = (WINDOW_HEIGHT - bullet->dest.h) / 2;
+
+    // //Initial sprite velocity 0 (because keyboard controls it)
+    //  bullet->x_vel = 0; 
+    //  bullet->y_vel = 0;
+
+    bullet->x_pos = player->x_pos;
+    bullet->y_pos = player->y_pos;
+    bullet->x_vel = 0; 
+    bullet->y_vel = -SPEED;
+
+    bullet->life = 1;
+
+
+    player->reload = 8;
 }

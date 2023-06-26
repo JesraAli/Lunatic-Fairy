@@ -28,13 +28,22 @@ typedef struct{
     int life;
     SDL_Texture *tex;
     SDL_Rect dest;
+    struct Entity *next; //For next Entity in linked list
 } Entity;
+
+
+typedef struct {  //Linked lists for players & bullets
+    Entity playerHead, *playerTail;
+    Entity bulletHead, *bulletTail;
+}Stage;
 
 //Function Declarations
 int load(void);
 void doInput(void);
 void prepareScene(void);
 int end(void);
+void initStage(void);
+void initPlayer(void);
  
 
 //Variables
@@ -42,8 +51,10 @@ SDL_Window *win;
 SDL_Renderer *rend;
 SDL_Surface *surface;
 
-Entity player,bullet;
+Entity *player,bullet;
 Action action;
+Stage stage;
+
 
 
 int load(){
@@ -83,28 +94,10 @@ int load(){
 int main(int argc, char **argv){
     
     load();
-
-    //initSprite(player, "sprite.png", 15);
+    initStage();
 
     action.up=action.down=action.left=action.right=0;
-
-
-    //player
-    player.tex = IMG_LoadTexture(rend,"sprite.png"); //Create texture for player
-    // //Get & Scale dimensions of texture:
-    SDL_QueryTexture(player.tex, NULL, NULL, &player.dest.w, &player.dest.h);
-    player.dest.w += 15; //scales image up
-    player.dest.h += 15;
-
-    //Sprite in centre of screen at start
-     player.x_pos = (WINDOW_WIDTH - player.dest.w) / 2;
-     player.y_pos = (WINDOW_HEIGHT - player.dest.h) / 2;
-
-    //Initial sprite velocity 0 (because keyboard controls it)
-     player.x_vel = 0; 
-     player.y_vel = 0;
      
-
     //bullet 
     bullet.tex = IMG_LoadTexture(rend,"bullet.png");
     SDL_QueryTexture(bullet.tex, NULL, NULL, &bullet.dest.w, &bullet.dest.h);
@@ -127,20 +120,20 @@ int main(int argc, char **argv){
         doInput();
         
         //collision detected with bounds (detect if sprite is going out of  window)
-        if (player.x_pos <= 0) player.x_pos = 0; //reset positions to keep in window
-        if (player.y_pos <= 0) player.y_pos = 0;
-        if (player.x_pos >= WINDOW_WIDTH - player.dest.w) player.x_pos = WINDOW_WIDTH - player.dest.w;
-        if (player.y_pos >= WINDOW_HEIGHT - player.dest.h) player.y_pos = WINDOW_HEIGHT - player.dest.h;
+        if (player->x_pos <= 0) player->x_pos = 0; //reset positions to keep in window
+        if (player->y_pos <= 0) player->y_pos = 0;
+        if (player->x_pos >= WINDOW_WIDTH - player->dest.w) player->x_pos = WINDOW_WIDTH - player->dest.w;
+        if (player->y_pos >= WINDOW_HEIGHT - player->dest.h) player->y_pos = WINDOW_HEIGHT - player->dest.h;
 
 
         // set the positions in the struct
-        player.dest.y = (int) player.y_pos;
-        player.dest.x = (int) player.x_pos;
+        player->dest.y = (int) player->y_pos;
+        player->dest.x = (int) player->x_pos;
 
 
         if(action.fire && bullet.life == 0){ //when bullet life is 0, decrease SPEED (because we want it going UP The screen)
-            bullet.x_pos = player.x_pos;
-            bullet.y_pos = player.y_pos;
+            bullet.x_pos = player->x_pos;
+            bullet.y_pos = player->y_pos;
             bullet.x_vel = 0; 
             bullet.y_vel = -SPEED;
    
@@ -162,7 +155,7 @@ int main(int argc, char **argv){
 
         
         // Present Scene: draw the image to the window
-        SDL_RenderCopy(rend, player.tex, NULL, &player.dest);
+        SDL_RenderCopy(rend, player->tex, NULL, &player->dest);
 
         if(bullet.life > 0){
             SDL_RenderCopy(rend, bullet.tex, NULL, &bullet.dest);
@@ -241,15 +234,15 @@ void doInput(){
     }
 
     //determine velocity of keyboard input
-    player.x_vel = player.y_vel = 0;
-    if(action.up && !action.down) player.y_vel = -SPEED; //if up pressed & NOT down, == negative (==up)
-    if (action.down && !action.up) player.y_vel = SPEED; //(positive == down)
-    if(action.left && !action.right) player.x_vel = -SPEED;
-    if (action.right && !action.left) player.x_vel = SPEED;
+    player->x_vel = player->y_vel = 0;
+    if(action.up && !action.down) player->y_vel = -SPEED; //if up pressed & NOT down, == negative (==up)
+    if (action.down && !action.up) player->y_vel = SPEED; //(positive == down)
+    if(action.left && !action.right) player->x_vel = -SPEED;
+    if (action.right && !action.left) player->x_vel = SPEED;
 
     //update positions (divide by 60 as only  calculating 1/60th of a second)
-    player.x_pos += player.x_vel / 60;
-    player.y_pos += player.y_vel / 60;
+    player->x_pos += player->x_vel / 60;
+    player->y_pos += player->y_vel / 60;
 }
 
 void prepareScene(){
@@ -259,7 +252,7 @@ void prepareScene(){
 
 int end(){
     //Clean up all initialised subsystems:
-    SDL_DestroyTexture(player.tex);
+    SDL_DestroyTexture(player->tex);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);
     SDL_Quit();
@@ -267,20 +260,33 @@ int end(){
 }
 
 
-// void initSprite(Entity sprite, char *filename, int scale){
+void initStage(){
+    stage.playerTail = &stage.playerHead;
+    stage.bulletTail = &stage.bulletHead;
 
-//     sprite.tex = IMG_LoadTexture(rend,*filename); //Create texture for player
+    initPlayer();
+}
 
-//     // //Get & Scale dimensions of texture:
-//     SDL_QueryTexture(sprite.tex, NULL, NULL, &sprite.dest.w, &sprite.dest.h);
-//     sprite.dest.w += scale; //scales image up
-//     sprite.dest.h += scale;
 
-//     //Sprite in centre of screen at start
-//      sprite.x_pos = (WINDOW_WIDTH - sprite.dest.w) / 2;
-//      sprite.y_pos = (WINDOW_HEIGHT - sprite.dest.h) / 2;
+void initPlayer(){
 
-//     //Initial sprite velocity 0 (because keyboard controls it)
-//      sprite.x_vel = 0; 
-//      sprite.y_vel = 0;
-// }
+    player = malloc(sizeof(Entity));
+    //Player object added to player linked list
+    stage.playerTail->next = player;
+    stage.playerTail = player;
+
+    player->tex = IMG_LoadTexture(rend,"sprite.png"); //Create texture for player
+    // //Get & Scale dimensions of texture:
+    SDL_QueryTexture(player->tex, NULL, NULL, &player->dest.w, &player->dest.h);
+    player->dest.w += 15; //scales image up
+    player->dest.h += 15;
+
+    //Sprite in centre of screen at start
+    player->x_pos = (WINDOW_WIDTH - player->dest.w) / 2;
+    player->y_pos = (WINDOW_HEIGHT - player->dest.h) / 2;
+
+    //Initial sprite velocity 0 (because keyboard controls it)
+     player->x_vel = 0; 
+     player->y_vel = 0;
+
+}

@@ -44,15 +44,19 @@ void doInput(void);
 void prepareScene(void);
 int end(void);
 void initStage(void);
-void initPlayer(void);
- 
+static void initPlayer(void);
+static void fireBullet(void);
+static void manipulateBullets(void);
+static void drawBullets(void);
+
 
 //Variables
 SDL_Window *win;
 SDL_Renderer *rend;
 SDL_Surface *surface;
 
-Entity *player, *bullet;
+Entity *player;
+// *bullet;
 Action action;
 Stage stage;
 
@@ -100,21 +104,22 @@ int main(int argc, char **argv){
     action.up=action.down=action.left=action.right=0;
      
     //bullet 
-    bullet->tex = IMG_LoadTexture(rend,"bullet->png");
-    SDL_QueryTexture(bullet->tex, NULL, NULL, &bullet->dest.w, &bullet->dest.h);
-    bullet->dest.w += 15; //scales image up
-    bullet->dest.h += 15;
+    // bullet->tex = IMG_LoadTexture(rend,"bullet->png");
+    // SDL_QueryTexture(bullet->tex, NULL, NULL, &bullet->dest.w, &bullet->dest.h);
+    // bullet->dest.w += 15; //scales image up
+    // bullet->dest.h += 15;
 
-    //Sprite in centre of screen at start
-     bullet->x_pos = (WINDOW_WIDTH - bullet->dest.w) / 2;
-     bullet->y_pos = (WINDOW_HEIGHT - bullet->dest.h) / 2;
+    // //Sprite in centre of screen at start
+    //  bullet->x_pos = (WINDOW_WIDTH - bullet->dest.w) / 2;
+    //  bullet->y_pos = (WINDOW_HEIGHT - bullet->dest.h) / 2;
 
-    //Initial sprite velocity 0 (because keyboard controls it)
-     bullet->x_vel = 0; 
-     bullet->y_vel = 0;
+    // //Initial sprite velocity 0 (because keyboard controls it)
+    //  bullet->x_vel = 0; 
+    //  bullet->y_vel = 0;
 
 
     while (1){
+
 
         prepareScene(); //Prepare Scene (Background & Clear)
 
@@ -131,31 +136,18 @@ int main(int argc, char **argv){
         player->dest.y = (int) player->y_pos;
         player->dest.x = (int) player->x_pos;
 
+        //printf("player->reload is: %d\n", player->reload);
 
         if(action.fire && player->reload == 0){ //when bullet life is 0, decrease SPEED (because we want it going UP The screen)
-            firebullet();
+            fireBullet();
         }
 
-        bullet->x_pos += bullet->x_vel / 60;
-        bullet->y_pos += bullet->y_vel / 60;
+        manipulateBullets();
 
-        // set the positions in the struct
-        bullet->dest.y = (int) bullet->y_pos;
-        bullet->dest.x = (int) bullet->x_pos;
-
-        //printf("bullet position is: %d\n", bullet->y_pos);
-
-        if(bullet->y_pos < -10){ //If bullet goes beyond the top of the screen!
-            bullet->life = 0; //reset bullet life to 0
-        }
-
-        
         // Present Scene: draw the image to the window
         SDL_RenderCopy(rend, player->tex, NULL, &player->dest);
 
-        if(bullet->life > 0){
-            SDL_RenderCopy(rend, bullet->tex, NULL, &bullet->dest);
-        }
+        drawBullets();
 
         SDL_RenderPresent(rend);
 
@@ -230,6 +222,8 @@ void doInput(){
     }
 
     //determine velocity of keyboard input
+
+    if(player->reload > 0) player->reload--;
     player->x_vel = player->y_vel = 0;
     if(action.up && !action.down) player->y_vel = -SPEED; //if up pressed & NOT down, == negative (==up)
     if (action.down && !action.up) player->y_vel = SPEED; //(positive == down)
@@ -257,6 +251,8 @@ int end(){
 
 
 void initStage(){
+
+    memset(&stage, 0, sizeof(Stage)); //Set stage variables to 0
     stage.playerTail = &stage.playerHead;
     stage.bulletTail = &stage.bulletHead;
 
@@ -264,9 +260,11 @@ void initStage(){
 }
 
 
-void initPlayer(){
+static void initPlayer(){
 
     player = malloc(sizeof(Entity));
+    memset(player, 0, sizeof(Entity)); //set player variables to 0
+
     //Player object added to player linked list
     stage.playerTail->next = player;
     stage.playerTail = player;
@@ -288,12 +286,16 @@ void initPlayer(){
 }
 
 
-void fireBullet(void){
+static void fireBullet(){
+
+
+    Entity *bullet;
 
     bullet = malloc(sizeof(Entity));
+    memset(bullet, 0, sizeof(Entity));
 
     //bullet 
-    bullet->tex = IMG_LoadTexture(rend,"bullet->png");
+    bullet->tex = IMG_LoadTexture(rend,"bullet.png");
     SDL_QueryTexture(bullet->tex, NULL, NULL, &bullet->dest.w, &bullet->dest.h);
     bullet->dest.w += 15; //scales image up
     bullet->dest.h += 15;
@@ -306,13 +308,59 @@ void fireBullet(void){
     //  bullet->x_vel = 0; 
     //  bullet->y_vel = 0;
 
+    stage.bulletTail->next = bullet;
+    stage.bulletTail = bullet;
+
+
     bullet->x_pos = player->x_pos;
     bullet->y_pos = player->y_pos;
     bullet->x_vel = 0; 
     bullet->y_vel = -SPEED;
 
     bullet->life = 1;
-
-
+    
     player->reload = 8;
+
+}
+
+
+static void manipulateBullets(){
+
+    Entity *b, *prev;
+    prev = &stage.bulletHead;
+    
+
+   for (b = stage.bulletHead.next ; b!=NULL ; b = b->next) //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    {
+
+        b->x_pos += b->x_vel / 60;
+        b->y_pos += b->y_vel / 60;
+
+        // set the positions in the struct
+        b->dest.y = (int) b->y_pos;
+        b->dest.x = (int) b->x_pos;
+
+        //printf("bullet position is: %d\n", bullet->y_pos);
+
+        if(b->y_pos < -10){ //If bullet goes beyond the top of the screen
+
+            if(b == stage.bulletTail){
+                stage.bulletTail = prev;
+            }
+            prev->next = b->next;
+            free(b);
+            b = prev;        
+        }
+    }
+
+}
+
+
+static void drawBullets(){
+
+    Entity *b;
+
+    for(b = stage.bulletHead.next ; b!=NULL; b=b->next){
+        SDL_RenderCopy(rend, b->tex, NULL, &b->dest);
+    }
 }

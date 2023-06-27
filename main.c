@@ -238,8 +238,10 @@ void doInput()
 
 void prepareScene()
 {
-    SDL_SetRenderDrawColor(rend, 96, 128, 255, 255);
-    SDL_RenderClear(rend);
+    //SDL_SetRenderDrawColor(rend, 96, 128, 255, 255);
+    SDL_SetRenderCopy(rend, "background.png",NULL,NULL);
+    SDL_RenderPresent(rend);
+    //SDL_RenderClear(rend);
 }
 
 int end()

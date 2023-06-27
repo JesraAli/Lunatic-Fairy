@@ -6,10 +6,10 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define WINDOW_WIDTH (640)
-#define WINDOW_HEIGHT (480)
-#define SCROLL_SPEED (300) // Speed in pixels per second
-#define SPEED (300)
+#define WINDOW_WIDTH 640
+#define WINDOW_HEIGHT 480
+#define SCROLL_SPEED 300 // Speed in pixels per second
+#define SPEED 300
 
 // Structs
 typedef struct
@@ -38,6 +38,7 @@ typedef struct
 { // Linked lists for players & bullets
     Entity playerHead, *playerTail;
     Entity bulletHead, *bulletTail;
+    Entity fairyHead, *fairyTail;
 } Stage;
 
 // Function Declarations
@@ -50,6 +51,10 @@ static void initPlayer(void);
 static void fireBullet(void);
 static void manipulateBullets(void);
 static void drawBullets(void);
+static void spawnFairies(void);
+static void manipulateFairy(void);
+static void drawFairy(void);
+
 
 // Variables
 SDL_Window *win;
@@ -59,6 +64,8 @@ SDL_Surface *surface;
 Entity *player;
 Action action;
 Stage stage;
+
+int fairySpawnTimer;
 
 int load()
 {
@@ -128,12 +135,15 @@ int main(int argc, char **argv)
             fireBullet();
         }
 
+        manipulateFairy();
         manipulateBullets();
+        spawnFairies();
 
         // Present Scene: draw the image to the window
         SDL_RenderCopy(rend, player->tex, NULL, &player->dest);
 
         drawBullets();
+        drawFairy();
 
         SDL_RenderPresent(rend);
 
@@ -247,13 +257,15 @@ void initStage()
     memset(&stage, 0, sizeof(Stage)); // Set stage variables to 0
     stage.playerTail = &stage.playerHead;
     stage.bulletTail = &stage.bulletHead;
+    stage.fairyTail = &stage.fairyHead;
 
     initPlayer();
+
+    fairySpawnTimer = 0;
 }
 
 static void initPlayer()
 {
-
     player = malloc(sizeof(Entity));
     memset(player, 0, sizeof(Entity)); // Set player variables to 0
 
@@ -334,5 +346,66 @@ static void drawBullets()
     for (Entity *b = stage.bulletHead.next; b != NULL; b = b->next)
     {
         SDL_RenderCopy(rend, b->tex, NULL, &b->dest);
+    }
+}
+
+static void spawnFairies(){
+    Entity *fairy;
+
+    if(--fairySpawnTimer <=0){ //Adds new enemey if timer falls below 1
+        fairy = malloc(sizeof(Entity));
+        memset(fairy, 0, sizeof(Entity));
+
+        stage.fairyTail->next = fairy;
+        stage.fairyTail = fairy;
+
+        fairy->x_pos = WINDOW_WIDTH;
+        fairy->y_pos = rand() % WINDOW_HEIGHT/2; //Fairies appear top half of window
+
+        fairy->tex = IMG_LoadTexture(rend, "fairy.png");
+        SDL_QueryTexture(fairy->tex, NULL, NULL, &fairy->dest.w, &fairy->dest.h);
+        fairy->dest.w += 15; // Scales image up
+        fairy->dest.h += 15;
+
+        fairy->x_vel = -140; //Allows fairy to move left and right of screen 
+
+        fairySpawnTimer = 30 + (rand() % 60); //ttimer for random enemy creation
+    }
+}
+
+static void manipulateFairy(){
+    Entity *f, *prev;
+
+    prev = &stage.fairyHead;
+
+    for (f = stage.fairyHead.next; f != NULL; f = f->next)
+    {
+        f->x_pos += f->x_vel / 60;
+        f->y_pos += f->y_vel / 60;
+
+        // Set the positions in the struct
+        f->dest.y = f->y_pos;
+        f->dest.x = f->x_pos;
+
+        if(f->x_pos == 0) //If fairy x_pos is 0, == far left of screen. (remove it from list)
+        { 
+
+            if (f == stage.fairyTail)
+            {
+                stage.fairyTail = prev;
+            }
+            prev->next = f->next;
+            free(f);
+            f = prev;
+        }
+        prev = f;
+    }
+}
+
+static void drawFairy(){
+    Entity *f;
+
+    for (f = stage.fairyHead.next ; f != NULL; f = f->next){
+        SDL_RenderCopy(rend, f->tex, NULL, &f->dest);
     }
 }

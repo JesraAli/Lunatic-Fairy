@@ -11,6 +11,9 @@
 #define SCROLL_SPEED 300 // Speed in pixels per second
 #define SPEED 300
 
+#define MAX(a, b) (a > b ? a : b)
+#define MIN(a, b) (a < b ? a : b)
+
 // Structs
 typedef struct
 {
@@ -55,7 +58,10 @@ static void spawnFairies(void);
 static void manipulateFairy(void);
 static void drawFairy(void);
 static int bulletHit(Entity *);
-static int playerCollide();
+static void playerCollide(void);
+static void resetStage(void);
+static void fireEnemyBulletCall(void);
+static void fireEnemyBullet(Entity *);
 
 // Variables
 SDL_Window *win;
@@ -66,7 +72,7 @@ Entity *player;
 Action action;
 Stage stage;
 
-int fairySpawnTimer;
+int fairySpawnTimer, stageResetTime;
 
 int load()
 {
@@ -118,18 +124,21 @@ int main(int argc, char **argv)
         doInput();
 
         // Collision detected with bounds (detect if sprite is going out of  window)
-        if (player->x_pos <= 0)
-            player->x_pos = 0; // Reset positions to keep in window
-        if (player->y_pos <= 0)
-            player->y_pos = 0;
-        if (player->x_pos >= WINDOW_WIDTH - player->dest.w)
-            player->x_pos = WINDOW_WIDTH - player->dest.w;
-        if (player->y_pos >= WINDOW_HEIGHT - player->dest.h)
-            player->y_pos = WINDOW_HEIGHT - player->dest.h;
+        if (player != NULL)
+        {
+            if (player->x_pos <= 0)
+                player->x_pos = 0; // Reset positions to keep in window
+            if (player->y_pos <= 0)
+                player->y_pos = 0;
+            if (player->x_pos >= WINDOW_WIDTH - player->dest.w)
+                player->x_pos = WINDOW_WIDTH - player->dest.w;
+            if (player->y_pos >= WINDOW_HEIGHT - player->dest.h)
+                player->y_pos = WINDOW_HEIGHT - player->dest.h;
 
-        // Set the positions in the struct
-        player->dest.y = player->y_pos;
-        player->dest.x = player->x_pos;
+            // Set the positions in the struct
+            player->dest.y = player->y_pos;
+            player->dest.x = player->x_pos;
+        }
 
         if (action.fire && player->reload == 0)
         {
@@ -138,7 +147,14 @@ int main(int argc, char **argv)
 
         manipulateBullets();
         manipulateFairy();
+        fireEnemyBulletCall();
         spawnFairies();
+
+        // Check if player killed, reset stage gradually
+        if (player == NULL && --stageResetTime <= 0)
+        {
+            resetStage();
+        }
 
         // Present Scene: draw the image to the window
         SDL_RenderCopy(rend, player->tex, NULL, &player->dest);
@@ -218,30 +234,31 @@ void doInput()
         }
     }
 
-    // Determine velocity of keyboard input
-    if (player->reload > 0)
-        player->reload--;
-    player->x_vel = player->y_vel = 0;
-    if (action.up && !action.down)
-        player->y_vel = -SPEED; // If up pressed & NOT down, == negative (==up)
-    if (action.down && !action.up)
-        player->y_vel = SPEED; //(positive == down)
-    if (action.left && !action.right)
-        player->x_vel = -SPEED;
-    if (action.right && !action.left)
-        player->x_vel = SPEED;
+    if (player != NULL) // Check if player has been killed or not
+    {
+        // Determine velocity of keyboard input
+        if (player->reload > 0)
+            player->reload--;
+        player->x_vel = player->y_vel = 0;
+        if (action.up && !action.down)
+            player->y_vel = -SPEED; // If up pressed & NOT down, == negative (==up)
+        if (action.down && !action.up)
+            player->y_vel = SPEED; //(positive == down)
+        if (action.left && !action.right)
+            player->x_vel = -SPEED;
+        if (action.right && !action.left)
+            player->x_vel = SPEED;
 
-    // Update positions (divide by 60 as only calculating 1/60th of a second)
-    player->x_pos += player->x_vel / 60;
-    player->y_pos += player->y_vel / 60;
+        // Update positions (divide by 60 as only calculating 1/60th of a second)
+        player->x_pos += player->x_vel / 60;
+        player->y_pos += player->y_vel / 60;
+    }
 }
 
 void prepareScene()
 {
-    //SDL_SetRenderDrawColor(rend, 96, 128, 255, 255);
-    SDL_SetRenderCopy(rend, "background.png",NULL,NULL);
-    SDL_RenderPresent(rend);
-    //SDL_RenderClear(rend);
+    SDL_SetRenderDrawColor(rend, 96, 128, 255, 255);
+    SDL_RenderClear(rend);
 }
 
 int end()
@@ -256,7 +273,6 @@ int end()
 
 void initStage()
 {
-
     memset(&stage, 0, sizeof(Stage)); // Set stage variables to 0
     stage.playerTail = &stage.playerHead;
     stage.bulletTail = &stage.bulletHead;
@@ -375,6 +391,8 @@ static void spawnFairies()
         stage.fairyTail = fairy;
 
         fairySpawnTimer = 30 + (rand() % 60); // ttimer for random enemy creation
+
+        fairy->reload = 60 * (1 + (rand())); // make sure fairies dont fire instantly when created
     }
 }
 
@@ -395,9 +413,12 @@ static void manipulateFairy()
 
         // printf("PlayerCollide value: %d\n",playerCollide(player));
         // if(f->x_pos <= -30 || f->life ==0 || playerCollide()==true ) //If fairy x_pos is 0, == far left of screen. (remove it from list)
-        if (f->x_pos <= -30 || f->life == 0) // If fairy x_pos is 0, == far left of screen. (remove it from list)
-                                             // if fairy health is 0 delete it
+        if (f->x_pos <= -30 || f->life == 0) // If fairy x_pos is 0, == far left of screen. (remove it from list) && // if fairy health is 0 delete it
         {
+            // if(player->life ==0){
+            //     player = NULL;
+            // }
+
             if (f == stage.fairyTail)
             {
                 stage.fairyTail = prev;
@@ -439,25 +460,121 @@ static int bulletHit(Entity *b)
     return false;
 }
 
-// static int playerCollide()
-// { // If player walks into enemy:
-//     Entity *f;
-//     SDL_Rect *result;
+static void playerCollide()
+{ // If player walks into enemy:
+    Entity *f;
+    SDL_Rect *result;
 
-//     for (f = stage.fairyHead.next; f != NULL; f = f->next)
-//     {
-//         if (SDL_IntersectRect(&player->dest, &f->dest, result) == SDL_TRUE)
-//         { // Check if player Rect & fairy Rect intersect
-//             // reset player position, delete fairy
-//             player->x_pos = (WINDOW_WIDTH - player->dest.w) / 2;
-//             player->y_pos = (WINDOW_HEIGHT - player->dest.h) / 2;
+    for (f = stage.fairyHead.next; f != NULL; f = f->next)
+    {
+        if (SDL_IntersectRect(&player->dest, &f->dest, result) == SDL_TRUE)
+        { // Check if player Rect & fairy Rect intersect
+            // reset player position, delete fairy
+            player == NULL;
+            // player->x_pos = (WINDOW_WIDTH - player->dest.w) / 2;
+            // player->y_pos = (WINDOW_HEIGHT - player->dest.h) / 2;
 
-//             // Initial sprite velocity 0 (because keyboard controls it)
-//             player->x_vel = 0;
-//             player->y_vel = 0;
-//             f->life = 0;
-//             return 1;
-//         }
-//     }
-//     return 0;
-// }
+            // // Initial sprite velocity 0 (because keyboard controls it)
+            // player->x_vel = 0;
+            // player->y_vel = 0;
+            // f->life = 0;
+            // return 1;
+        }
+    }
+    // return 0;
+}
+
+void calcAtkSlope(int x_pos, int y_pos, int x_dest, int y_dest, float *dx, float *dy) // Calculates enemy atk slope to target player
+{
+    int steps = MAX(abs(x_pos - x_dest), abs(y_pos - y_dest));
+    if (steps == 0)
+    {
+        *dx = *dy = 0;
+        return;
+    }
+    *dx = (x_pos - x_dest);
+    *dx /= steps;
+
+    *dy = (y_pos - y_dest);
+    *dy /= steps;
+}
+
+static void resetStage()
+{
+    Entity *e;
+
+    while (stage.playerHead.next)
+    {
+        e = stage.playerHead.next;
+        stage.playerHead.next = e->next;
+        free(e);
+    }
+
+    while (stage.bulletHead.next)
+    {
+        e = stage.bulletHead.next;
+        stage.bulletHead.next = e->next;
+        free(e);
+    }
+
+    while (stage.fairyHead.next)
+    {
+        e = stage.fairyHead.next;
+        stage.fairyHead.next = e->next;
+        free(e);
+    }
+
+    initStage();
+    stageResetTime = 120;
+}
+
+static void fireEnemyBulletCall()
+{
+    Entity *f;
+    for (f = stage.fairyHead.next; f != NULL; f = f->next)
+    {
+        if (player != NULL && --f->reload <= 0) // if reload is <=0  and player is alive:
+        {
+            fireEnemyBullet(f);
+        }
+    }
+}
+
+static void fireEnemyBullet(Entity *f)
+{
+    Entity *bullet;
+    SDL_Rect *result;
+
+    bullet = malloc(sizeof(Entity));
+    memset(bullet, 0, sizeof(Entity));
+
+    bullet->tex = IMG_LoadTexture(rend, "enemyBullet.png");
+    SDL_QueryTexture(bullet->tex, NULL, NULL, &bullet->dest.w, &bullet->dest.h);
+    bullet->dest.w += 5; // Scales image up
+    bullet->dest.h += 5;
+
+    stage.bulletTail->next = bullet;
+    stage.bulletTail = bullet;
+
+    bullet->x_pos = f->x_pos;
+    bullet->y_pos = f->y_pos;
+    bullet->life = 1;
+
+    calcAtkSlope(player->x_pos + (player->dest.w / 2), player->y_pos + (player->dest.h / 2), f->x_pos, f->y_pos, &bullet->x_vel, &bullet->y_vel);
+
+    bullet->x_vel *= SPEED;
+    bullet->y_vel *= SPEED;
+    f->reload = (rand() % 60 * 2);
+
+    // Set the positions in the struct
+    bullet->dest.y = bullet->y_pos;
+    bullet->dest.x = bullet->x_pos;
+
+    if (SDL_IntersectRect(&player->dest, &bullet->dest, result) == SDL_TRUE)
+    {
+        player == NULL;
+    }
+
+    printf("Bullet: (%d,%d)\n", bullet->dest.x, bullet->dest.y);
+    printf("Player: (%d,%d)\n", player->dest.x, player->dest.y);
+}

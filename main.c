@@ -437,6 +437,12 @@ static void drawFairy()
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
+         //If its 0 and 0, it will appear in top left corner (perhaps make it so if x&y position is 
+        //0 at beginning, make it to -1 and check for -1 OR have a visiblity flag and check if its visible)
+        if(f->dest.x == 0 && f->dest.y == 0) 
+        {
+            continue;
+        }
         SDL_RenderCopy(rend, f->tex, NULL, &f->dest);
     }
 }
@@ -575,6 +581,6 @@ static void fireEnemyBullet(Entity *f)
         player == NULL;
     }
 
-    printf("Bullet: (%d,%d)\n", bullet->dest.x, bullet->dest.y);
-    printf("Player: (%d,%d)\n", player->dest.x, player->dest.y);
+    // printf("Bullet: (%d,%d)\n", bullet->dest.x, bullet->dest.y);
+    // printf("Player: (%d,%d)\n", player->dest.x, player->dest.y);
 }

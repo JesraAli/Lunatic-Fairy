@@ -75,11 +75,12 @@ Entity *player;
 Action action;
 Stage stage;
 
-int fairySpawnTimer;
+int fairySpawnTimer, playerLife;
 
 /*Main Function*/
 int main(int argc, char **argv)
 {
+    playerLife = 3;
 
     load();
     initStage();
@@ -88,6 +89,12 @@ int main(int argc, char **argv)
 
     while (true)
     {
+        if (playerLife == 0)
+        {
+            printf("You ran out of lives! Game Over\n");
+            end();
+        }
+
         prepareScene(); // Prepare Scene (Background & Clear)
 
         userInput();
@@ -109,7 +116,6 @@ int main(int argc, char **argv)
             player->rect.x = player->x_pos;
 
             player->hitbox.y = player->y_pos + 26; //+ is down, - is up
-            // printf("y position is: %d\n", player->hitbox.y);
             player->hitbox.x = player->x_pos;
         }
 
@@ -119,19 +125,24 @@ int main(int argc, char **argv)
         }
 
         manipulateAllBullets();
+        // Check if player is NULL, then repeat the while loop from beginning
+        //^^ Avoids a repetition of playerCollide() getting called afterwards
+        if (player == NULL) //!!! Perhaps implement more efficient solution !!//
+        {
+            resetStage();
+            continue;
+        }
         manipulateFairy();
         fireEnemyBulletCall();
         spawnFairies();
         playerCollide(); // Check if player collided with fairy
-
         // Check if player killed
         if (player == NULL)
         {
             resetStage();
         }
-
         // Present Scene: draw the image to the window
-        if (player->rect.x == 0 && player->rect.y == 0) //check if its 0 (in top left corner) //NEED TO CHANGE AT LATER DATE
+        if (player->rect.x == 0 && player->rect.y == 0) // check if its 0 (in top left corner) //NEED TO CHANGE AT LATER DATE
         {
             continue;
         }
@@ -449,19 +460,14 @@ static void manipulateAllBullets()
         }
 
         // If Enemy bullet HITS Player
-        if (SDL_HasIntersection(&eB->rect, &player->hitbox) == SDL_TRUE) // Check if Player Rect & fairy Rect intersect
+        if (SDL_HasIntersection(&eB->rect, &player->hitbox) == SDL_TRUE) // Check if Player Rect & enemy bullet Rect intersect
         {
-            // set player to NULL & fairy life to 0 so it despawns
+            // set player to NULL & enemy bullet life to 0 so it despawns
             eB->life = 0;
             player = NULL;
+            playerLife--;
             break;
         }
-    }
-
-    // Check if player is NULL
-    if (player == NULL)
-    {
-        resetStage();
     }
 }
 
@@ -495,8 +501,8 @@ static void spawnFairies()
         fairy->rect.h += 15;
 
         // Hitbox Scaling
-        fairy->hitbox.w = player->rect.w /1.5;
-        fairy->hitbox.h = player->rect.h /1.5;
+        fairy->hitbox.w = player->rect.w / 1.5;
+        fairy->hitbox.h = player->rect.h / 1.5;
 
         stage.fairyTail->next = fairy;
         stage.fairyTail = fairy;
@@ -578,7 +584,6 @@ static int bulletHit(Entity *b)
 static int playerCollide()
 {
     Entity *f;
-    SDL_Rect *result;
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
@@ -587,6 +592,7 @@ static int playerCollide()
             // set player & fairy life to 0 so it despawns
             player = NULL;
             f->life = 0;
+            playerLife--;
             return true;
         }
     }

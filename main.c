@@ -33,7 +33,8 @@ typedef struct
     int life;
     int reload;
     SDL_Texture *tex;
-    SDL_Rect dest;
+    SDL_Rect rect;
+    SDL_Rect hitbox;
     struct Entity *next; // For next Entity in linked list
 } Entity;
 
@@ -59,7 +60,7 @@ static void spawnFairies(void);
 static void manipulateFairy(void);
 static void drawFairy(void);
 static int bulletHit(Entity *);
-static void playerCollide(void);
+static int playerCollide(void);
 static void resetStage(void);
 static void fireEnemyBulletCall(void);
 static void fireEnemyBullet(Entity *);
@@ -98,14 +99,18 @@ int main(int argc, char **argv)
                 player->x_pos = 0; // Reset positions to keep in window
             if (player->y_pos <= 0)
                 player->y_pos = 0;
-            if (player->x_pos >= WINDOW_WIDTH - player->dest.w)
-                player->x_pos = WINDOW_WIDTH - player->dest.w;
-            if (player->y_pos >= WINDOW_HEIGHT - player->dest.h)
-                player->y_pos = WINDOW_HEIGHT - player->dest.h;
+            if (player->x_pos >= WINDOW_WIDTH - player->rect.w)
+                player->x_pos = WINDOW_WIDTH - player->rect.w;
+            if (player->y_pos >= WINDOW_HEIGHT - player->rect.h)
+                player->y_pos = WINDOW_HEIGHT - player->rect.h;
 
             // Set the positions in the struct
-            player->dest.y = player->y_pos;
-            player->dest.x = player->x_pos;
+            player->rect.y = player->y_pos;
+            player->rect.x = player->x_pos;
+
+            player->hitbox.y = player->y_pos + 26; //+ is down, - is up
+            // printf("y position is: %d\n", player->hitbox.y);
+            player->hitbox.x = player->x_pos;
         }
 
         if (action.fire && player->reload == 0)
@@ -126,7 +131,11 @@ int main(int argc, char **argv)
         }
 
         // Present Scene: draw the image to the window
-        SDL_RenderCopy(rend, player->tex, NULL, &player->dest);
+        if (player->rect.x == 0 && player->rect.y == 0) //check if its 0 (in top left corner) //NEED TO CHANGE AT LATER DATE
+        {
+            continue;
+        }
+        SDL_RenderCopy(rend, player->tex, NULL, &player->rect);
 
         drawBullets();
         drawEnemyBullets();
@@ -343,13 +352,17 @@ static void initPlayer()
     player->tex = IMG_LoadTexture(rend, "sprite.png"); // Create texture for player
 
     // Get & Scale dimensions of texture:
-    SDL_QueryTexture(player->tex, NULL, NULL, &player->dest.w, &player->dest.h);
-    player->dest.w += 15; // scales image up
-    player->dest.h += 15;
+    SDL_QueryTexture(player->tex, NULL, NULL, &player->rect.w, &player->rect.h);
+    player->rect.w += 15; // scales image up
+    player->rect.h += 15;
+
+    // Hitbox Scaling
+    player->hitbox.w = player->rect.w / 3.5;
+    player->hitbox.h = player->rect.h / 5;
 
     // Sprite in centre of screen at start
-    player->x_pos = (WINDOW_WIDTH - player->dest.w) / 2;
-    player->y_pos = (WINDOW_HEIGHT - player->dest.h) / 2;
+    player->x_pos = (WINDOW_WIDTH - player->rect.w) / 2;
+    player->y_pos = (WINDOW_HEIGHT - player->rect.h) / 2;
 
     // Initial sprite velocity 0 (because keyboard controls it)
     player->x_vel = 0;
@@ -365,9 +378,9 @@ static void fireBullet()
     memset(bullet, 0, sizeof(Entity));
 
     bullet->tex = IMG_LoadTexture(rend, "bullet.png");
-    SDL_QueryTexture(bullet->tex, NULL, NULL, &bullet->dest.w, &bullet->dest.h);
-    bullet->dest.w += 15; // Scales image up
-    bullet->dest.h += 15;
+    SDL_QueryTexture(bullet->tex, NULL, NULL, &bullet->rect.w, &bullet->rect.h);
+    bullet->rect.w += 15; // Scales image up
+    bullet->rect.h += 15;
 
     stage.bulletTail->next = bullet;
     stage.bulletTail = bullet;
@@ -397,8 +410,8 @@ static void manipulateAllBullets()
         b->y_pos += b->y_vel / 60;
 
         // Set the positions in the struct
-        b->dest.y = b->y_pos;
-        b->dest.x = b->x_pos;
+        b->rect.y = b->y_pos;
+        b->rect.x = b->x_pos;
 
         // If bullet hits enemy OR goes beyond the top of the screen OR BulletLife = 0
         if (bulletHit(b) || b->y_pos < -10 || b->life == 0)
@@ -420,8 +433,8 @@ static void manipulateAllBullets()
         eB->y_pos += eB->y_vel / 60;
 
         // Set the positions in the struct
-        eB->dest.y = eB->y_pos;
-        eB->dest.x = eB->x_pos;
+        eB->rect.y = eB->y_pos;
+        eB->rect.x = eB->x_pos;
 
         // If bullet goes beyond the top of the screen / BulletLife = 0
         if (eB->y_pos < -10 || eB->life == 0)
@@ -436,7 +449,7 @@ static void manipulateAllBullets()
         }
 
         // If Enemy bullet HITS Player
-        if (SDL_HasIntersection(&eB->dest, &player->dest) == SDL_TRUE) // Check if Player Rect & fairy Rect intersect
+        if (SDL_HasIntersection(&eB->rect, &player->hitbox) == SDL_TRUE) // Check if Player Rect & fairy Rect intersect
         {
             // set player to NULL & fairy life to 0 so it despawns
             eB->life = 0;
@@ -457,7 +470,7 @@ static void drawBullets()
 {
     for (Entity *b = stage.bulletHead.next; b != NULL; b = b->next)
     {
-        SDL_RenderCopy(rend, b->tex, NULL, &b->dest);
+        SDL_RenderCopy(rend, b->tex, NULL, &b->rect);
     }
 }
 
@@ -477,9 +490,13 @@ static void spawnFairies()
         fairy->x_vel = -140; // Allows fairy to move left and right of screen
 
         fairy->tex = IMG_LoadTexture(rend, "fairy.png");
-        SDL_QueryTexture(fairy->tex, NULL, NULL, &fairy->dest.w, &fairy->dest.h);
-        fairy->dest.w += 15; // Scales image up
-        fairy->dest.h += 15;
+        SDL_QueryTexture(fairy->tex, NULL, NULL, &fairy->rect.w, &fairy->rect.h);
+        fairy->rect.w += 15; // Scales image up
+        fairy->rect.h += 15;
+
+        // Hitbox Scaling
+        fairy->hitbox.w = player->rect.w /1.5;
+        fairy->hitbox.h = player->rect.h /1.5;
 
         stage.fairyTail->next = fairy;
         stage.fairyTail = fairy;
@@ -503,8 +520,10 @@ static void manipulateFairy()
         f->y_pos += f->y_vel / 60;
 
         // Set the positions in the struct
-        f->dest.y = f->y_pos;
-        f->dest.x = f->x_pos;
+        f->rect.y = f->y_pos;
+        f->rect.x = f->x_pos;
+        f->hitbox.y = f->y_pos;
+        f->hitbox.x = f->x_pos;
 
         if (f->x_pos <= -30 || f->life == 0) // If fairy x_pos is 0, == far left of screen. (remove it from list) && if fairy health is 0 delete it
         {
@@ -529,11 +548,11 @@ static void drawFairy()
     {
         // If its 0 and 0, it will appear in top left corner (perhaps make it so if x&y position is
         // 0 at beginning, make it to -1 and check for -1 OR have a visiblity flag and check if its visible)
-        if (f->dest.x == 0 && f->dest.y == 0)
+        if (f->rect.x == 0 && f->rect.y == 0)
         {
             continue;
         }
-        SDL_RenderCopy(rend, f->tex, NULL, &f->dest);
+        SDL_RenderCopy(rend, f->tex, NULL, &f->rect);
     }
 }
 
@@ -544,7 +563,7 @@ static int bulletHit(Entity *b)
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
-        if (SDL_HasIntersection(&b->dest, &f->dest) == SDL_TRUE) // Check if bullet Rect & fairy Rect intersect
+        if (SDL_HasIntersection(&b->rect, &f->hitbox) == SDL_TRUE) // Check if bullet Rect & fairy Rect intersect
         {
             // set bullet & fairy life to 0 so it despawns
             b->life = 0;
@@ -556,14 +575,14 @@ static int bulletHit(Entity *b)
 }
 
 /**Check if player collide with fairy*/
-static void playerCollide()
+static int playerCollide()
 {
     Entity *f;
     SDL_Rect *result;
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
-        if (SDL_HasIntersection(&player->dest, &f->dest) == SDL_TRUE) // Check if Player Rect & fairy Rect intersect
+        if (SDL_HasIntersection(&player->hitbox, &f->hitbox) == SDL_TRUE) // Check if Player Rect & fairy Rect intersect
         {
             // set player & fairy life to 0 so it despawns
             player = NULL;
@@ -575,18 +594,18 @@ static void playerCollide()
 }
 
 /**Calculate fairy attack slope to target player*/
-void calcAtkSlope(int x_pos, int y_pos, int x_dest, int y_dest, float *dx, float *dy)
+void calcAtkSlope(int x_pos, int y_pos, int x_rect, int y_rect, float *dx, float *dy)
 {
-    int steps = MAX(abs(x_pos - x_dest), abs(y_pos - y_dest));
+    int steps = MAX(abs(x_pos - x_rect), abs(y_pos - y_rect));
     if (steps == 0)
     {
         *dx = *dy = 0;
         return;
     }
-    *dx = (x_pos - x_dest);
+    *dx = (x_pos - x_rect);
     *dx /= steps;
 
-    *dy = (y_pos - y_dest);
+    *dy = (y_pos - y_rect);
     *dy /= steps;
 }
 
@@ -614,9 +633,9 @@ static void fireEnemyBullet(Entity *f)
     memset(enemyBullet, 0, sizeof(Entity));
 
     enemyBullet->tex = IMG_LoadTexture(rend, "enemyBullet.png");
-    SDL_QueryTexture(enemyBullet->tex, NULL, NULL, &enemyBullet->dest.w, &enemyBullet->dest.h);
-    enemyBullet->dest.w += 5; // Scales image up
-    enemyBullet->dest.h += 5;
+    SDL_QueryTexture(enemyBullet->tex, NULL, NULL, &enemyBullet->rect.w, &enemyBullet->rect.h);
+    enemyBullet->rect.w += 5; // Scales image up
+    enemyBullet->rect.h += 5;
 
     stage.enemyBulletTail->next = enemyBullet;
     stage.enemyBulletTail = enemyBullet;
@@ -625,21 +644,21 @@ static void fireEnemyBullet(Entity *f)
     enemyBullet->y_pos = f->y_pos;
     enemyBullet->life = 1;
 
-    calcAtkSlope(player->x_pos + (player->dest.w / 2), player->y_pos + (player->dest.h / 2), f->x_pos, f->y_pos, &enemyBullet->x_vel, &enemyBullet->y_vel);
+    calcAtkSlope(player->x_pos + (player->hitbox.w / 2), player->y_pos + (player->hitbox.h / 2), f->x_pos, f->y_pos, &enemyBullet->x_vel, &enemyBullet->y_vel);
 
     enemyBullet->x_vel *= SPEED;
     enemyBullet->y_vel *= SPEED;
     f->reload = (rand() % 60 * 2);
 
     // Set the positions in the struct
-    enemyBullet->dest.y = enemyBullet->y_pos;
-    enemyBullet->dest.x = enemyBullet->x_pos;
+    enemyBullet->rect.y = enemyBullet->y_pos;
+    enemyBullet->rect.x = enemyBullet->x_pos;
 }
 
 static void drawEnemyBullets()
 {
     for (Entity *b = stage.enemyBulletHead.next; b != NULL; b = b->next)
     {
-        SDL_RenderCopy(rend, b->tex, NULL, &b->dest);
+        SDL_RenderCopy(rend, b->tex, NULL, &b->rect);
     }
 }

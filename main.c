@@ -6,8 +6,8 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 480
+#define WINDOW_WIDTH 800 //other heights: 640 x 480,
+#define WINDOW_HEIGHT 600
 #define SCROLL_SPEED 300 // Speed in pixels per second
 #define SPEED 300
 
@@ -46,6 +46,13 @@ typedef struct
     Entity enemyBulletHead, *enemyBulletTail;
 } Stage;
 
+typedef struct
+{
+    int active;
+    SDL_Texture *tex;
+    SDL_Rect rect;
+} Background;
+
 // Function Declarations
 int load(void);
 void userInput(void);
@@ -74,6 +81,7 @@ SDL_Surface *surface;
 Entity *player;
 Action action;
 Stage stage;
+Background *background;
 
 int fairySpawnTimer, playerLife;
 
@@ -84,6 +92,7 @@ int main(int argc, char **argv)
 
     load();
     initStage();
+    initBackground();
 
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
 
@@ -146,6 +155,8 @@ int main(int argc, char **argv)
         {
             continue;
         }
+
+        SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
         SDL_RenderCopy(rend, player->tex, NULL, &player->rect);
 
         drawBullets();
@@ -285,8 +296,23 @@ void userInput()
 /*Prepare Scene Function*/
 void prepareScene()
 {
-    SDL_SetRenderDrawColor(rend, 96, 128, 255, 255);
+    // SDL_SetRenderDrawColor(rend, 96, 128, 255, 255);
     SDL_RenderClear(rend);
+}
+
+void initBackground()
+{
+    background = malloc(sizeof(Background));
+    memset(background, 0, sizeof(Background));
+
+    background->rect.x = 0;
+    background->rect.y = 0;
+    background->rect.w = WINDOW_WIDTH;
+    background->rect.h = WINDOW_HEIGHT;
+
+    background->tex = IMG_LoadTexture(rend, "background.png"); // Create texture for player
+
+    SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
 }
 
 /**End Function*/

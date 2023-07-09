@@ -6,7 +6,7 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define WINDOW_WIDTH 800 //other heights: 640 x 480,
+#define WINDOW_WIDTH 800 // other heights: 640 x 480,
 #define WINDOW_HEIGHT 600
 #define SCROLL_SPEED 300 // Speed in pixels per second
 #define SPEED 300
@@ -32,6 +32,7 @@ typedef struct
     float y_vel;
     int life;
     int reload;
+    int expVisibility;
     SDL_Texture *tex;
     SDL_Rect rect;
     SDL_Rect hitbox;
@@ -44,6 +45,7 @@ typedef struct
     Entity bulletHead, *bulletTail;
     Entity fairyHead, *fairyTail;
     Entity enemyBulletHead, *enemyBulletTail;
+    Entity explosionHead, *explosionTail;
 } Stage;
 
 typedef struct
@@ -72,6 +74,8 @@ static void resetStage(void);
 static void fireEnemyBulletCall(void);
 static void fireEnemyBullet(Entity *);
 static void drawEnemyBullets(void);
+void fireExplosion(int, int, int, int);
+void drawEnemyExplosion();
 
 // Variables
 SDL_Window *win;
@@ -107,6 +111,7 @@ int main(int argc, char **argv)
         prepareScene(); // Prepare Scene (Background & Clear)
 
         userInput();
+        SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
 
         // Collision detected with bounds (detect if sprite is going out of  window)
         if (player != NULL)
@@ -134,8 +139,7 @@ int main(int argc, char **argv)
         }
 
         manipulateAllBullets();
-        // Check if player is NULL, then repeat the while loop from beginning
-        //^^ Avoids a repetition of playerCollide() getting called afterwards
+        // Check if player is NULL, then repeat the while loop from beginning (avoids repetition of playerCollide() call)
         if (player == NULL) //!!! Perhaps implement more efficient solution !!//
         {
             resetStage();
@@ -144,9 +148,10 @@ int main(int argc, char **argv)
         manipulateFairy();
         fireEnemyBulletCall();
         spawnFairies();
-        playerCollide(); // Check if player collided with fairy
-        // Check if player killed
-        if (player == NULL)
+        manipulateExplosion();
+
+        playerCollide();    // Check if player collided with fairy
+        if (player == NULL) // Check if player killed
         {
             resetStage();
         }
@@ -156,12 +161,13 @@ int main(int argc, char **argv)
             continue;
         }
 
-        SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
         SDL_RenderCopy(rend, player->tex, NULL, &player->rect);
 
+        // Drawing:
         drawBullets();
         drawEnemyBullets();
         drawFairy();
+        drawEnemyExplosion();
 
         SDL_RenderPresent(rend);
 
@@ -205,6 +211,8 @@ int load()
         SDL_Quit;
         return 1;
     }
+
+    SDL_ShowCursor(0); // Hide cursor
 }
 
 /*User Key Input Function*/
@@ -334,6 +342,7 @@ void initStage()
     stage.bulletTail = &stage.bulletHead;
     stage.fairyTail = &stage.fairyHead;
     stage.enemyBulletTail = &stage.enemyBulletHead;
+    stage.explosionTail = &stage.explosionHead;
 
     initPlayer();
 
@@ -370,6 +379,13 @@ static void resetStage()
     {
         e = stage.enemyBulletHead.next;
         stage.enemyBulletHead.next = e->next;
+        free(e);
+    }
+
+    while (stage.explosionHead.next)
+    {
+        e = stage.explosionHead.next;
+        stage.explosionHead.next = e->next;
         free(e);
     }
 
@@ -600,6 +616,8 @@ static int bulletHit(Entity *b)
             // set bullet & fairy life to 0 so it despawns
             b->life = 0;
             f->life = 0;
+            // manipulateExplosion();
+            fireExplosion(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
             return true;
         }
     }
@@ -687,10 +705,80 @@ static void fireEnemyBullet(Entity *f)
     enemyBullet->rect.x = enemyBullet->x_pos;
 }
 
+/*Draw enemy bullets*/
 static void drawEnemyBullets()
 {
     for (Entity *b = stage.enemyBulletHead.next; b != NULL; b = b->next)
     {
         SDL_RenderCopy(rend, b->tex, NULL, &b->rect);
+    }
+}
+
+void manipulateExplosion()
+{
+    Entity *explosion, *prev;
+
+    prev = &stage.explosionHead;
+
+    for (explosion = stage.explosionHead.next; explosion != NULL; explosion = explosion->next)
+    {
+        explosion->expVisibility /= 1.1; // Decrease visiblity quickly
+
+        if (--explosion->expVisibility <= 0)
+        {
+            if (explosion == stage.explosionTail)
+            {
+                stage.explosionTail = prev;
+            }
+
+            prev->next = explosion->next;
+            free(explosion);
+            explosion = prev;
+        }
+
+        prev = explosion;
+    }
+}
+void fireExplosion(int x, int y, int w, int h)
+{
+    Entity *explosion;
+
+    explosion = malloc(sizeof(Entity));
+    memset(explosion, 0, sizeof(Entity));
+
+    explosion->tex = IMG_LoadTexture(rend, "explosion.png");
+    SDL_QueryTexture(explosion->tex, NULL, NULL, &explosion->rect.w, &explosion->rect.h);
+
+    // printf("x = %d, y = %d, w = %d, h = %d", x,y,w,h);
+
+    explosion->x_pos = x;
+    explosion->y_pos = y;
+
+    explosion->rect.x = x;
+    explosion->rect.y = y;
+    explosion->rect.w = w;
+    explosion->rect.h = h;
+
+    stage.explosionTail->next = explosion;
+    stage.explosionTail = explosion;
+
+    // explosion->expVisibility = rand() % 60 * 3;
+    explosion->expVisibility = 255;
+}
+
+void drawEnemyExplosion()
+{
+    Entity e = stage.explosionHead;
+
+    SDL_SetTextureBlendMode(e.tex, SDL_BLENDMODE_BLEND);
+
+    for (Entity *exp = stage.explosionHead.next; exp != NULL; exp = exp->next)
+    {
+
+        // SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_ADD);
+        // SDL_SetTextureBlendMode(exp->tex, SDL_BLENDMODE_ADD);
+
+        SDL_SetTextureAlphaMod(exp->tex, exp->expVisibility);
+        SDL_RenderCopy(rend, exp->tex, NULL, &exp->rect);
     }
 }

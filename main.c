@@ -6,10 +6,13 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define WINDOW_WIDTH 800 // other heights: 640 x 480,
+#define WINDOW_WIDTH 800 // (Other heights: 640 x 480)
 #define WINDOW_HEIGHT 600
 #define SCROLL_SPEED 300 // Speed in pixels per second
 #define SPEED 300
+#define NUM_HIGHSCORES 8
+#define FONT_WIDTH 18
+#define FONT_HEIGHT 28
 
 #define MAX(a, b) (a > b ? a : b)
 #define MIN(a, b) (a < b ? a : b)
@@ -40,7 +43,7 @@ typedef struct
 } Entity;
 
 typedef struct
-{ // Linked lists for players & bullets
+{ // Linked lists for players, bullets, fairies, explosions
     Entity playerHead, *playerTail;
     Entity bulletHead, *bulletTail;
     Entity fairyHead, *fairyTail;
@@ -54,6 +57,18 @@ typedef struct
     SDL_Texture *tex;
     SDL_Rect rect;
 } Background;
+
+typedef struct
+{
+    int recent;
+    int score;
+} Highscore;
+
+typedef struct
+{
+    Highscore highscore[NUM_HIGHSCORES];
+
+} HighscoreList;
 
 // Function Declarations
 int load(void);
@@ -86,17 +101,20 @@ Entity *player;
 Action action;
 Stage stage;
 Background *background;
+HighscoreList highscoreList;
 
-int fairySpawnTimer, playerLife;
+int fairySpawnTimer, playerLife, playerScore;
 
 /*Main Function*/
 int main(int argc, char **argv)
 {
     playerLife = 3;
+    playerScore = 0;
 
     load();
     initStage();
     initBackground();
+    initHighScoreTable();
 
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
 
@@ -104,14 +122,18 @@ int main(int argc, char **argv)
     {
         if (playerLife == 0)
         {
+            addHighscore(playerScore);
+            drawHighscores();
+            SDL_RenderPresent(rend);
+            SDL_DestroyRenderer(rend); //Clean up rend to display highscore page
+
             printf("You ran out of lives! Game Over\n");
-            end();
+            // end();
         }
 
         prepareScene(); // Prepare Scene (Background & Clear)
 
         userInput();
-        SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
 
         // Collision detected with bounds (detect if sprite is going out of  window)
         if (player != NULL)
@@ -168,7 +190,8 @@ int main(int argc, char **argv)
         drawEnemyBullets();
         drawFairy();
         drawEnemyExplosion();
-
+        // drawHighscores();
+        drawHeadingScores();
         SDL_RenderPresent(rend);
 
         SDL_Delay(1000 / 60); // Wait 1/60th of a second
@@ -304,7 +327,6 @@ void userInput()
 /*Prepare Scene Function*/
 void prepareScene()
 {
-    // SDL_SetRenderDrawColor(rend, 96, 128, 255, 255);
     SDL_RenderClear(rend);
 }
 
@@ -318,7 +340,7 @@ void initBackground()
     background->rect.w = WINDOW_WIDTH;
     background->rect.h = WINDOW_HEIGHT;
 
-    background->tex = IMG_LoadTexture(rend, "background.png"); // Create texture for player
+    background->tex = IMG_LoadTexture(rend, "background.png");
 
     SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
 }
@@ -326,7 +348,7 @@ void initBackground()
 /**End Function*/
 int end()
 {
-    // Clean up all initialised subsystems:
+    // Clean up all initialised subsystems
     SDL_DestroyTexture(player->tex);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);
@@ -392,7 +414,7 @@ static void resetStage()
     initStage();
 }
 
-/**Iniitialise Player Function*/
+/**Initialise Player Function*/
 static void initPlayer()
 {
     player = malloc(sizeof(Entity));
@@ -504,7 +526,7 @@ static void manipulateAllBullets()
         // If Enemy bullet HITS Player
         if (SDL_HasIntersection(&eB->rect, &player->hitbox) == SDL_TRUE) // Check if Player Rect & enemy bullet Rect intersect
         {
-            // set player to NULL & enemy bullet life to 0 so it despawns
+            // Set player to NULL & enemy bullet life to 0 so it despawns
             eB->life = 0;
             player = NULL;
             playerLife--;
@@ -549,9 +571,9 @@ static void spawnFairies()
         stage.fairyTail->next = fairy;
         stage.fairyTail = fairy;
 
-        fairySpawnTimer = 20 + (rand() % 20); // timer for random enemy creation
+        fairySpawnTimer = 20 + (rand() % 20); // Timer for random enemy creation
 
-        fairy->reload = 60 * (1 + (rand())); // make sure fairies dont fire instantly when created
+        fairy->reload = 60 * (1 + (rand())); // Make sure fairies dont fire instantly when created
     }
 }
 
@@ -613,11 +635,12 @@ static int bulletHit(Entity *b)
     {
         if (SDL_HasIntersection(&b->rect, &f->hitbox) == SDL_TRUE) // Check if bullet Rect & fairy Rect intersect
         {
-            // set bullet & fairy life to 0 so it despawns
+            // Set bullet & fairy life to 0 so it despawns
             b->life = 0;
             f->life = 0;
-            // manipulateExplosion();
             fireExplosion(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
+
+            playerScore++;
             return true;
         }
     }
@@ -633,7 +656,7 @@ static int playerCollide()
     {
         if (SDL_HasIntersection(&player->hitbox, &f->hitbox) == SDL_TRUE) // Check if Player Rect & fairy Rect intersect
         {
-            // set player & fairy life to 0 so it despawns
+            // Set player & fairy life to 0 so it despawns
             player = NULL;
             f->life = 0;
             playerLife--;
@@ -677,7 +700,6 @@ static void fireEnemyBullet(Entity *f)
 {
     Entity *enemyBullet, *eBPrev;
     eBPrev = &stage.enemyBulletHead;
-    // SDL_Rect *result;
 
     enemyBullet = malloc(sizeof(Entity));
     memset(enemyBullet, 0, sizeof(Entity));
@@ -714,6 +736,7 @@ static void drawEnemyBullets()
     }
 }
 
+/**Explosion Update*/
 void manipulateExplosion()
 {
     Entity *explosion, *prev;
@@ -739,6 +762,8 @@ void manipulateExplosion()
         prev = explosion;
     }
 }
+
+/*Initialise & Fire Explosion*/
 void fireExplosion(int x, int y, int w, int h)
 {
     Entity *explosion;
@@ -748,8 +773,6 @@ void fireExplosion(int x, int y, int w, int h)
 
     explosion->tex = IMG_LoadTexture(rend, "explosion.png");
     SDL_QueryTexture(explosion->tex, NULL, NULL, &explosion->rect.w, &explosion->rect.h);
-
-    // printf("x = %d, y = %d, w = %d, h = %d", x,y,w,h);
 
     explosion->x_pos = x;
     explosion->y_pos = y;
@@ -762,10 +785,10 @@ void fireExplosion(int x, int y, int w, int h)
     stage.explosionTail->next = explosion;
     stage.explosionTail = explosion;
 
-    // explosion->expVisibility = rand() % 60 * 3;
     explosion->expVisibility = 255;
 }
 
+/*Draw Explosion*/
 void drawEnemyExplosion()
 {
     Entity e = stage.explosionHead;
@@ -774,11 +797,145 @@ void drawEnemyExplosion()
 
     for (Entity *exp = stage.explosionHead.next; exp != NULL; exp = exp->next)
     {
+        // Expand to create exploding effect
+        exp->rect.w += 1;
+        exp->rect.h += 1;
+        exp->rect.x -= 1;
 
-        // SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_ADD);
-        // SDL_SetTextureBlendMode(exp->tex, SDL_BLENDMODE_ADD);
-
-        SDL_SetTextureAlphaMod(exp->tex, exp->expVisibility);
+        SDL_SetTextureAlphaMod(exp->tex, exp->expVisibility); // Change alpha visiblity using decreasing expVisiblity variable
         SDL_RenderCopy(rend, exp->tex, NULL, &exp->rect);
+    }
+}
+
+/*Highscore Features*/
+
+/*Draw Text to Screen*/
+void drawText(int x, int y, int r, int g, int b, char *format, ...)
+{
+    int i, len, c;
+    SDL_Rect srcrect;
+    SDL_Rect dest;
+    va_list args;
+
+    char drawTextBuffer[1024];
+
+    SDL_Texture *fontTexture = IMG_LoadTexture(rend, "font.png"); // Create texture for font
+                                                                  // SDL_QueryTexture(fontTexture, NULL, NULL, &rect.w, &rect.h);
+
+    memset(&drawTextBuffer, '\0', sizeof(drawTextBuffer));
+
+    va_start(args, format);
+    vsprintf(drawTextBuffer, format, args);
+    va_end(args);
+
+    len = strlen(drawTextBuffer);
+
+    // Set individual texture characters rect values
+    srcrect.w = FONT_WIDTH;
+    srcrect.h = FONT_HEIGHT;
+    srcrect.y = 0;
+
+    SDL_SetTextureColorMod(fontTexture, r, g, b);
+
+    for (i = 0; i < len; i++)
+    {
+        c = drawTextBuffer[i];
+
+        if (c >= ' ' && c <= 'Z')
+        {
+            srcrect.x = (c - ' ') * FONT_WIDTH;
+
+            // Set dest values
+            dest.x = x;
+            dest.y = y;
+            dest.w = srcrect.w;
+            dest.h = srcrect.h;
+            SDL_RenderCopy(rend, fontTexture, &srcrect, &dest);
+
+            x += FONT_WIDTH;
+        }
+    }
+}
+
+/*Initialise Table of Highscores*/
+void initHighScoreTable()
+{
+    memset(&highscoreList, 0, sizeof(HighscoreList));
+
+    // for (int i = 0 ; i < NUM_HIGHSCORES ; i++)
+    // {
+    // 	highscoreList.highscore[i].score = NUM_HIGHSCORES - i;
+    // }
+}
+
+/*Draw List of Highscores*/
+void drawHighscores()
+{
+    int i, y_pos;
+
+    y_pos = 140;
+
+    drawText(310, 60, 255, 255, 255, "HIGHSCORES");
+
+    for (i = 0; i < NUM_HIGHSCORES; i++)
+    {
+        if (highscoreList.highscore[i].recent)
+        {
+            drawText(240, y_pos, 255, 255, 0, "#%d ............. %03d", (i + 1), highscoreList.highscore[i].score);
+        }
+        else
+        {
+            drawText(240, y_pos, 255, 255, 255, "#%d ............. %03d", (i + 1), highscoreList.highscore[i].score);
+        }
+
+        y_pos += 50;
+    }
+
+    drawText(180, 550, 255, 255, 255, "PRESS ENTER TO PLAY AGAIN!");
+}
+
+static int highscoreComparator(const void *a, const void *b)
+{
+    Highscore *h1 = ((Highscore *)a);
+    Highscore *h2 = ((Highscore *)b);
+
+    return h2->score - h1->score;
+}
+
+/*Add New Highscore in Ascending Order*/
+void addHighscore(int score)
+{
+    Highscore newHighscores[NUM_HIGHSCORES + 1];
+    int i;
+
+    for (i = 0; i < NUM_HIGHSCORES; i++)
+    {
+        newHighscores[i] = highscoreList.highscore[i];
+        newHighscores[i].recent = 0;
+    }
+
+    newHighscores[NUM_HIGHSCORES].score = score;
+    newHighscores[NUM_HIGHSCORES].recent = 1;
+
+    qsort(newHighscores, NUM_HIGHSCORES + 1, sizeof(Highscore), highscoreComparator);
+
+    for (i = 0; i < NUM_HIGHSCORES; i++)
+    {
+        highscoreList.highscore[i] = newHighscores[i];
+    }
+}
+
+/*Draw the current Score and current highest Highscore at top of screen*/
+void drawHeadingScores(void)
+{
+    drawText(10, 10, 255, 255, 255, "SCORE: %03d", playerScore);
+
+    if (playerScore < highscoreList.highscore[0].score)
+    {
+        drawText(530, 10, 255, 255, 255, "HIGHSCORE: %03d", highscoreList.highscore[0].score);
+    }
+    else
+    {
+        drawText(530, 10, 0, 255, 0, "HIGHSCORE: %03d", playerScore);
     }
 }

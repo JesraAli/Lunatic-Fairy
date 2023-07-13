@@ -100,7 +100,7 @@ SDL_Surface *surface;
 Entity *player;
 Action action;
 Stage stage;
-Background *background;
+Background *background, *title;
 HighscoreList highscoreList;
 
 int fairySpawnTimer, playerLife, playerScore;
@@ -108,15 +108,15 @@ int fairySpawnTimer, playerLife, playerScore;
 /*Main Function*/
 int main(int argc, char **argv)
 {
-    playerLife = 3;
-    playerScore = 0;
-
     load();
     initStage();
     initBackground();
     initHighScoreTable();
+    initTitle();
 
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
+
+    titleLoop();
 
     while (true)
     {
@@ -125,15 +125,31 @@ int main(int argc, char **argv)
             addHighscore(playerScore);
             drawHighscores();
             SDL_RenderPresent(rend);
-            SDL_DestroyRenderer(rend); //Clean up rend to display highscore page
-
             printf("You ran out of lives! Game Over\n");
-            // end();
+
+            // Restart Game
+            SDL_Event restartEvent;
+            while (SDL_WaitEvent(&restartEvent))
+            {
+                if (restartEvent.type == SDL_QUIT)
+                {
+                    end();
+                }
+
+                if (restartEvent.key.keysym.scancode == SDL_SCANCODE_ESCAPE) // Go to title with ESCAPE key
+                {
+                    prepareScene();
+                    memset(&action, 0, sizeof(Action)); // Set action variables to 0
+                    titleLoop();
+                    break;
+                }
+            }
         }
 
         prepareScene(); // Prepare Scene (Background & Clear)
 
         userInput();
+        SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
 
         // Collision detected with bounds (detect if sprite is going out of  window)
         if (player != NULL)
@@ -190,8 +206,7 @@ int main(int argc, char **argv)
         drawEnemyBullets();
         drawFairy();
         drawEnemyExplosion();
-        // drawHighscores();
-        drawHeadingScores();
+        drawStats();
         SDL_RenderPresent(rend);
 
         SDL_Delay(1000 / 60); // Wait 1/60th of a second
@@ -330,6 +345,45 @@ void prepareScene()
     SDL_RenderClear(rend);
 }
 
+void initTitle()
+{
+    title = malloc(sizeof(Background));
+    memset(title, 0, sizeof(Background));
+
+    title->rect.x = 0;
+    title->rect.y = 0;
+    title->rect.w = WINDOW_WIDTH;
+    title->rect.h = WINDOW_HEIGHT;
+
+    title->tex = IMG_LoadTexture(rend, "title.png");
+}
+
+void titleLoop()
+{
+    SDL_Event event;
+    SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
+    SDL_RenderCopy(rend, title->tex, NULL, &title->rect);
+
+    SDL_RenderPresent(rend);
+
+    playerLife = 3;
+    playerScore = 0;
+
+    while (SDL_WaitEvent(&event))
+    {
+
+        if (event.type == SDL_QUIT)
+        {
+            end();
+        }
+
+        if (event.key.keysym.scancode == SDL_SCANCODE_RETURN)
+        {
+            break;
+        }
+    }
+}
+
 void initBackground()
 {
     background = malloc(sizeof(Background));
@@ -341,8 +395,6 @@ void initBackground()
     background->rect.h = WINDOW_HEIGHT;
 
     background->tex = IMG_LoadTexture(rend, "background.png");
-
-    SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
 }
 
 /**End Function*/
@@ -891,7 +943,7 @@ void drawHighscores()
         y_pos += 50;
     }
 
-    drawText(180, 550, 255, 255, 255, "PRESS ENTER TO PLAY AGAIN!");
+    drawText(110, 550, 255, 255, 255, "PRESS ESC TO RETURN TO TITLE SCREEN");
 }
 
 static int highscoreComparator(const void *a, const void *b)
@@ -926,7 +978,7 @@ void addHighscore(int score)
 }
 
 /*Draw the current Score and current highest Highscore at top of screen*/
-void drawHeadingScores(void)
+void drawStats(void)
 {
     drawText(10, 10, 255, 255, 255, "SCORE: %03d", playerScore);
 

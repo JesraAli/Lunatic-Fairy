@@ -704,6 +704,10 @@ bool playerNullCheck()
     {
         return true;
     }
+    else{
+        return false;
+    }
+    
 }
 
 void collisionDetection()

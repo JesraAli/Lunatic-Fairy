@@ -293,8 +293,8 @@ void initPlayer()
 
     // Get & Scale dimensions of texture:
     SDL_QueryTexture(player->tex, NULL, NULL, &player->rect.w, &player->rect.h);
-    player->rect.w += 15; // scales image up
-    player->rect.h += 15;
+    player->rect.w += 35; // scales image up
+    player->rect.h += 40;
 
     // Hitbox Scaling
     player->hitbox.w = player->rect.w / 3.5;
@@ -727,7 +727,7 @@ void collisionDetection()
         player->rect.y = player->y_pos;
         player->rect.x = player->x_pos;
 
-        player->hitbox.y = player->y_pos + 26; //+ is down, - is up
+        player->hitbox.y = player->y_pos + 31; //+ is down, - is up
         player->hitbox.x = player->x_pos;
     }
 

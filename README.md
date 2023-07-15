@@ -6,7 +6,7 @@ An in development 2D shooter game, written in C using SDL2. It is based off the 
 To compile:
 
 ```sh
-gcc main.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm
+gcc src/gui.c src/main.c src/highscore.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm
 ```
 
 To run:

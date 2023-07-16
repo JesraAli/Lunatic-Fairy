@@ -1,7 +1,7 @@
 #include "libs.h"
 #include "structs.h"
 #include "gui.h"
-#include "highscore.h"
+#include "highscoreInfo.h"
 
 /*Main Function*/
 int main(int argc, char **argv)
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
             addHighscore(returnPlayerScore());
             drawHighscores();
             presentScene();
-            printf("You ran out of lives! Game Over\n");
+            //printf("You ran out of lives! Game Over\n");
             restartGame(); //Restart the game
         }
 

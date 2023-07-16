@@ -12,7 +12,7 @@ typedef struct
     int fire;
 } Action;
 
-typedef struct
+typedef struct Entity
 {
     int x_pos;
     int y_pos;

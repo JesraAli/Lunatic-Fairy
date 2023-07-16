@@ -2,7 +2,7 @@
 #define gui
 #include "libs.h"
 #include "structs.h"
-#include "highscore.h"
+#include "highscoreInfo.h"
 
 int load(void);
 void userInput(void);

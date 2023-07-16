@@ -42,7 +42,9 @@ int main(int argc, char **argv)
 
         manipulateFairy();
         fireEnemyBulletCall();
-        spawnFairies();
+        spawnFairies('L');
+        spawnFairies('R');
+
         manipulateExplosion();
         playerCollide();
 

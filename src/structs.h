@@ -21,6 +21,8 @@ typedef struct
     int life;
     int reload;
     int expVisibility;
+    bool leftDir;
+    bool rightDir;
     SDL_Texture *tex;
     SDL_Rect rect;
     SDL_Rect hitbox;

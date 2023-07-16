@@ -28,7 +28,7 @@ void manipulateExplosion();
 void fireExplosion(int x, int y, int w, int h);
 void drawEnemyExplosion(void);
 
-void spawnFairies(void);
+void spawnFairies(char);
 void manipulateFairy(void);
 void drawFairy(void);
 void calcAtkSlope(int x_pos, int y_pos, int x_rect, int y_rect, float *dx, float *dy);

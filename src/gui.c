@@ -25,7 +25,7 @@ int load()
 
     // Create Window
     win = SDL_CreateWindow(
-        "Jesra's Game",
+        "Lunatic Fairy",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         WINDOW_WIDTH, WINDOW_HEIGHT, 0);
@@ -297,7 +297,7 @@ void initPlayer()
     player->rect.h += 40;
 
     // Hitbox Scaling
-    player->hitbox.w = player->rect.w / 3.5;
+    player->hitbox.w = player->rect.w / 20;
     player->hitbox.h = player->rect.h / 5;
 
     // Sprite in centre of screen at start
@@ -520,9 +520,8 @@ void drawEnemyExplosion()
     }
 }
 
-/*fairy STAAAAAAAAAAAAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE*/
 /**Initialise Fairies Function*/
-void spawnFairies()
+void spawnFairies(char direction)
 {
     Entity *fairy;
 
@@ -531,7 +530,17 @@ void spawnFairies()
         fairy = malloc(sizeof(Entity));
         memset(fairy, 0, sizeof(Entity));
 
-        fairy->x_pos = WINDOW_WIDTH;
+        if (direction == 'L') //Spawn left side of screen
+        {
+            fairy->x_pos = WINDOW_WIDTH - 810;
+            fairy->leftDir = true;
+        }
+        else if (direction == 'R') //Spawn right side of screen
+        {
+            fairy->x_pos = WINDOW_WIDTH;
+            fairy->rightDir = true;
+        }
+
         fairy->y_pos = rand() % WINDOW_HEIGHT / 2; // Fairies appear top half of window
         fairy->life = 1;
         fairy->x_vel = -140; // Allows fairy to move left and right of screen
@@ -548,7 +557,7 @@ void spawnFairies()
         stage.fairyTail->next = fairy;
         stage.fairyTail = fairy;
 
-        fairySpawnTimer = 20 + (rand() % 20); // Timer for random enemy creation
+        fairySpawnTimer = 20 + (rand() % 20);; // Timer for random enemy creation
 
         fairy->reload = 60 * (1 + (rand())); // Make sure fairies dont fire instantly when created
     }
@@ -563,7 +572,14 @@ void manipulateFairy()
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
-        f->x_pos += f->x_vel / 60;
+        if (f->leftDir == true) //Check if its spawns from Left Side
+        {
+            f->x_pos -= f->x_vel / 60; // Moves towards right
+        }
+        else if (f->rightDir == true) //Check if its spawns from Right Side
+        {
+            f->x_pos += f->x_vel / 60; 
+        }
         f->y_pos += f->y_vel / 60;
 
         // Set the positions in the struct
@@ -572,15 +588,31 @@ void manipulateFairy()
         f->hitbox.y = f->y_pos;
         f->hitbox.x = f->x_pos;
 
-        if (f->x_pos <= -30 || f->life == 0) // If fairy x_pos is 0, == far left of screen. (remove it from list) && if fairy health is 0 delete it
+        if (f->rightDir = true)
         {
-            if (f == stage.fairyTail)
+            if (f->x_pos <= -30 || f->life == 0) // If fairy x_pos is 0, == far left of screen. (remove it from list) && if fairy health is 0 delete it
             {
-                stage.fairyTail = prev;
+                if (f == stage.fairyTail)
+                {
+                    stage.fairyTail = prev;
+                }
+                prev->next = f->next;
+                free(f);
+                f = prev;
             }
-            prev->next = f->next;
-            free(f);
-            f = prev;
+        }
+        else
+        {
+            if (f->x_pos >= -30 || f->life == 0) // If fairy x_pos is 0, == far left of screen. (remove it from list) && if fairy health is 0 delete it
+            {
+                if (f == stage.fairyTail)
+                {
+                    stage.fairyTail = prev;
+                }
+                prev->next = f->next;
+                free(f);
+                f = prev;
+            }
         }
         prev = f;
     }
@@ -653,8 +685,7 @@ void fireEnemyBullet(Entity *f)
     enemyBullet->y_pos = f->y_pos;
     enemyBullet->life = 1;
 
-    calcAtkSlope(player->x_pos + (player->hitbox.w / 2), player->y_pos + (player->hitbox.h / 2), f->x_pos, f->y_pos, &enemyBullet->x_vel, &enemyBullet->y_vel);
-
+    calcAtkSlope(player->hitbox.x + (player->hitbox.w / 2), player->hitbox.y + (player->hitbox.h / 2), f->x_pos, f->y_pos, &enemyBullet->x_vel, &enemyBullet->y_vel);
     enemyBullet->x_vel *= SPEED;
     enemyBullet->y_vel *= SPEED;
     f->reload = (rand() % 60 * 2);
@@ -704,10 +735,10 @@ bool playerNullCheck()
     {
         return true;
     }
-    else{
+    else
+    {
         return false;
     }
-    
 }
 
 void collisionDetection()
@@ -727,8 +758,8 @@ void collisionDetection()
         player->rect.y = player->y_pos;
         player->rect.x = player->x_pos;
 
-        player->hitbox.y = player->y_pos + 31; //+ is down, - is up
-        player->hitbox.x = player->x_pos;
+        player->hitbox.y = player->y_pos + 32; //+ is down, - is up
+        player->hitbox.x = player->x_pos +30;  //+ = right, - is left
     }
 
     if (action.fire && player->reload == 0)

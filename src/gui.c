@@ -7,7 +7,8 @@ SDL_Surface *surface;
 Entity *player;
 Action action;
 Stage stage;
-Background *background, *title;
+Background *background, *title, *modeList;
+Mode *mode;
 
 int playerLife;
 int playerScore;
@@ -47,8 +48,6 @@ int load()
         SDL_Quit;
         return 1;
     }
-
-    SDL_ShowCursor(0); // Hide cursor
 }
 
 /*User Key Input Function*/
@@ -159,12 +158,13 @@ void initTitle()
     title->rect.h = WINDOW_HEIGHT;
 
     title->tex = IMG_LoadTexture(rend, "img/title.png");
+
+    SDL_ShowCursor(1); // Show cursor
 }
 
 void titleLoop()
 {
     SDL_Event event;
-    SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
     SDL_RenderCopy(rend, title->tex, NULL, &title->rect);
 
     SDL_RenderPresent(rend);
@@ -181,9 +181,89 @@ void titleLoop()
         }
 
         if (event.key.keysym.scancode == SDL_SCANCODE_RETURN)
-        {
+        { // Go to screen with list of difficulties
+            initModes();
+            presentModes();
             break;
         }
+    }
+}
+
+void initModes()
+{ // Difficulty Levels: Easy, Hard, Lunatic
+
+    modeList = malloc(sizeof(Background));
+    memset(modeList, 0, sizeof(Background));
+
+    mode = malloc(sizeof(Entity));
+    memset(mode, 0, sizeof(Background));
+
+    modeList->rect.w = WINDOW_WIDTH;
+    modeList->rect.h = WINDOW_HEIGHT;
+    modeList->tex = IMG_LoadTexture(rend, "img/modes.png");
+}
+
+void presentModes()
+{
+    SDL_Event event;
+    // SDL_MouseButtonEvent event;
+    prepareScene();
+
+    SDL_RenderCopy(rend, modeList->tex, NULL, &modeList->rect);
+    SDL_RenderPresent(rend);
+    
+    SDL_ShowCursor(1); // Show cursor
+
+
+    while (SDL_WaitEvent(&event))
+    {
+        switch (event.type)
+        {
+        case SDL_QUIT:
+            end();
+            break;
+        }
+
+        // If the event is mouse click
+        if (event.type == SDL_MOUSEBUTTONDOWN)
+        {
+             printf("(%d,%d)\n", event.motion.x, event.motion.y); //print cursor click location
+
+            // Set mode to corresponding user selection
+            if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 210 && event.motion.y <= 290) // check if it is in the desired area
+            {
+                mode->easy = true; // whatever mode the mouse area is clicked in will become true
+                break;
+            }
+
+            else if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 325 && event.motion.y <= 390)
+            {
+                mode->hard = true;
+                break;
+            }
+
+            else if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 443 && event.motion.y <= 505)
+            {
+                mode->lunatic = true;
+                break;
+            }
+        }
+    }
+}
+
+char* returnMode()
+{
+    if (mode->easy == true)
+    {
+        return "Easy";
+    }
+    else if (mode->hard == true)
+    {
+        return "Hard";
+    }
+    else if (mode->lunatic == true)
+    {
+        return "Lunatic";
     }
 }
 
@@ -192,8 +272,6 @@ void initBackground()
     background = malloc(sizeof(Background));
     memset(background, 0, sizeof(Background));
 
-    background->rect.x = 0;
-    background->rect.y = 0;
     background->rect.w = WINDOW_WIDTH;
     background->rect.h = WINDOW_HEIGHT;
 
@@ -530,12 +608,12 @@ void spawnFairies(char direction)
         fairy = malloc(sizeof(Entity));
         memset(fairy, 0, sizeof(Entity));
 
-        if (direction == 'L') //Spawn left side of screen
+        if (direction == 'L') // Spawn left side of screen
         {
             fairy->x_pos = WINDOW_WIDTH - 810;
             fairy->leftDir = true;
         }
-        else if (direction == 'R') //Spawn right side of screen
+        else if (direction == 'R') // Spawn right side of screen
         {
             fairy->x_pos = WINDOW_WIDTH;
             fairy->rightDir = true;
@@ -557,7 +635,17 @@ void spawnFairies(char direction)
         stage.fairyTail->next = fairy;
         stage.fairyTail = fairy;
 
-        fairySpawnTimer = 20 + (rand() % 20);; // Timer for random enemy creation
+        if(returnMode() == "Easy"){
+            fairySpawnTimer = 90 + (rand() % 20);
+
+        }
+        else if(returnMode() == "Hard"){
+            fairySpawnTimer = 20 + (rand() % 20);
+
+        }
+        else if(returnMode() == "Lunatic"){
+            fairySpawnTimer = 5 + (rand() % 20); // Timer for random enemy creation
+        }
 
         fairy->reload = 60 * (1 + (rand())); // Make sure fairies dont fire instantly when created
     }
@@ -572,13 +660,13 @@ void manipulateFairy()
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
-        if (f->leftDir == true) //Check if its spawns from Left Side
+        if (f->leftDir == true) // Check if its spawns from Left Side
         {
             f->x_pos -= f->x_vel / 60; // Moves towards right
         }
-        else if (f->rightDir == true) //Check if its spawns from Right Side
+        else if (f->rightDir == true) // Check if its spawns from Right Side
         {
-            f->x_pos += f->x_vel / 60; 
+            f->x_pos += f->x_vel / 60;
         }
         f->y_pos += f->y_vel / 60;
 
@@ -759,7 +847,7 @@ void collisionDetection()
         player->rect.x = player->x_pos;
 
         player->hitbox.y = player->y_pos + 32; //+ is down, - is up
-        player->hitbox.x = player->x_pos +30;  //+ = right, - is left
+        player->hitbox.x = player->x_pos + 30; //+ = right, - is left
     }
 
     if (action.fire && player->reload == 0)

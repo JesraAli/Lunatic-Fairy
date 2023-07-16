@@ -10,6 +10,11 @@ void prepareScene(void);
 void presentScene(void);
 void initTitle(void);
 void titleLoop(void);
+
+void initModes(void);
+void presentModes(void);
+char* returnMode(void);
+
 void initBackground(void);
 void initStage(void);
 

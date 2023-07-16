@@ -13,6 +13,8 @@ int main(int argc, char **argv)
     initTitle();
 
     titleLoop();
+    SDL_ShowCursor(0); // Hide cursor
+
 
     while (true)
     {

@@ -57,4 +57,11 @@ typedef struct
 
 } HighscoreList;
 
+typedef struct //List of modes
+{
+    bool easy;
+    bool hard;
+    bool lunatic;
+} Mode;
+
 #endif

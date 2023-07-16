@@ -1,5 +1,13 @@
-# SDL2
-An in development 2D shooter game, written in C using SDL2. It is based off the bullet-hell video game 'Touhou Project'.
+# Lunatic Fairy
+Lunatic Fairy is an in development single player 2D shooter game, written in C using Simple DirectMedia Layer 2 (SDL2). 
+
+The game is based off a popular japanese bullet-hell video game.
+
+
+## Objective
+The objective of the game is for the player to defeat as many fairies as possible to obtain points towards their overall score.
+
+The player has 3 lives, and must dodge the fairies bullets to prevent losing a life.
 
 ## Building and Running
 

@@ -13,7 +13,7 @@ void titleLoop(void);
 
 void initModes(void);
 void presentModes(void);
-char* returnMode(void);
+int returnMode(void);
 
 void initBackground(void);
 void initStage(void);

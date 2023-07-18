@@ -195,8 +195,8 @@ void initModes()
     modeList = malloc(sizeof(Background));
     memset(modeList, 0, sizeof(Background));
 
-    mode = malloc(sizeof(Entity));
-    memset(mode, 0, sizeof(Background));
+    mode = malloc(sizeof(Mode));
+    memset(mode, 0, sizeof(Mode));
 
     modeList->rect.w = WINDOW_WIDTH;
     modeList->rect.h = WINDOW_HEIGHT;
@@ -227,7 +227,7 @@ void presentModes()
         // If the event is mouse click
         if (event.type == SDL_MOUSEBUTTONDOWN)
         {
-             printf("(%d,%d)\n", event.motion.x, event.motion.y); //print cursor click location
+             //printf("(%d,%d)\n", event.motion.x, event.motion.y); //print cursor click location
 
             // Set mode to corresponding user selection
             if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 210 && event.motion.y <= 290) // check if it is in the desired area
@@ -251,19 +251,19 @@ void presentModes()
     }
 }
 
-char* returnMode()
+int returnMode() //1:  Easy, 2: Hard, 3: Lunatic
 {
     if (mode->easy == true)
     {
-        return "Easy";
+        return 1;
     }
     else if (mode->hard == true)
     {
-        return "Hard";
+        return 2;
     }
     else if (mode->lunatic == true)
     {
-        return "Lunatic";
+        return 3;
     }
 }
 
@@ -635,15 +635,15 @@ void spawnFairies(char direction)
         stage.fairyTail->next = fairy;
         stage.fairyTail = fairy;
 
-        if(returnMode() == "Easy"){
+        if(returnMode() == 1){
             fairySpawnTimer = 90 + (rand() % 20);
 
         }
-        else if(returnMode() == "Hard"){
+        else if(returnMode() == 2){
             fairySpawnTimer = 20 + (rand() % 20);
 
         }
-        else if(returnMode() == "Lunatic"){
+        else if(returnMode() == 3){
             fairySpawnTimer = 5 + (rand() % 20); // Timer for random enemy creation
         }
 

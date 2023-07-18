@@ -20,8 +20,8 @@ int main(int argc, char **argv)
     {
         if (returnPlayerLife()== 0)
         {
-            addHighscore(returnPlayerScore());
-            drawHighscores();
+            addHighscore(returnPlayerScore(), returnHighscoreList());
+            drawHighscores(returnHighscoreList());
             presentScene();
             //printf("You ran out of lives! Game Over\n");
             restartGame(); //Restart the game
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
         drawEnemyBullets();
         drawFairy();
         drawEnemyExplosion();
-        drawStats();
+        drawStats(returnHighscoreList());
         presentScene();
         SDL_Delay(1000 / 60); // Wait 1/60th of a second
     }

@@ -23,7 +23,6 @@ int main(int argc, char **argv)
             addHighscore(returnPlayerScore(), returnHighscoreList());
             drawHighscores(returnHighscoreList());
             presentScene();
-            //printf("You ran out of lives! Game Over\n");
             restartGame(); //Restart the game
         }
 

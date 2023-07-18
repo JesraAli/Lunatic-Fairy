@@ -17,13 +17,6 @@ void initHighScoreTable()
 
     highscoreListLunatic = malloc(sizeof(HighscoreList));
     memset(highscoreListLunatic, 0, sizeof(HighscoreList));
-
-    printf("INTIIATIED HIGHSCORE: %d\n", highscoreListEasy->highscore[0].score);
-
-    // for (int i = 0 ; i < NUM_HIGHSCORES ; i++)
-    // {
-    // 	highscoreList->highscore[i].score = NUM_HIGHSCORES - i;
-    // }
 }
 
 HighscoreList *returnHighscoreList()

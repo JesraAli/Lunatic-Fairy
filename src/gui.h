@@ -6,12 +6,12 @@
 
 int load(void);
 void userInput(void);
-void prepareScene(void);
-void presentScene(void);
 void initTitle(void);
 void titleLoop(void);
 
 void initModes(void);
+Background *initSeperateBackground(char *);
+
 void presentModes(void);
 int returnMode(void);
 
@@ -22,7 +22,8 @@ void resetStage(void);
 void restartGame(void);
 
 void initPlayer(void);
-int playerCollide(void); // collide with fairy
+int playerCollideFairy(void);
+int playerCollidePowerUp(void);
 
 void fireBullet(void);
 void manipulateAllBullets(void);
@@ -30,8 +31,12 @@ void drawBullets(void);
 int bulletHit(Entity *b);
 
 void manipulateExplosion();
-void fireExplosion(int x, int y, int w, int h);
+void spawnExplosion(int x, int y, int w, int h);
 void drawEnemyExplosion(void);
+
+void manipulatePowerUp();
+void spawnPowerUp(int x, int y, int w, int h);
+void drawPowerUp();
 
 void spawnFairies(char);
 void manipulateFairy(void);
@@ -41,6 +46,8 @@ void fireEnemyBulletCall(void);
 void fireEnemyBullet(Entity *f);
 void drawEnemyBullets(void);
 
+void prepareScene(void);
+void presentScene(void);
 int returnPlayerScore(void);
 int returnPlayerLife(void);
 int returnFairySpawnTimer(void);

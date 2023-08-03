@@ -36,6 +36,8 @@ typedef struct
     Entity fairyHead, *fairyTail;
     Entity enemyBulletHead, *enemyBulletTail;
     Entity explosionHead, *explosionTail;
+    Entity powerUpHead, *powerUpTail;
+    
 } Stage;
 
 typedef struct

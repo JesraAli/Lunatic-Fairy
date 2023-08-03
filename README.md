@@ -14,7 +14,7 @@ The player has 3 lives, and must dodge the fairies bullets to prevent losing a l
 To compile:
 
 ```sh
-gcc src/gui.c src/main.c src/highscore.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm
+gcc src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm
 ```
 
 To run:

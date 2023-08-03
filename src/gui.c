@@ -7,12 +7,13 @@ SDL_Surface *surface;
 Entity *player;
 Action action;
 Stage stage;
-Background *background, *title, *modeList;
+Background *background, *title, *modeList, *modeEasy, *modeHard, *modeLunatic;
 Mode *mode;
 
 int playerLife;
 int playerScore;
 int fairySpawnTimer;
+bool CTRL_PRESS;
 
 /*Load Initialisations Function*/
 int load()
@@ -56,16 +57,14 @@ void userInput()
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
-
         switch (event.type)
         {
         case SDL_QUIT:
             end();
             break;
 
-        case SDL_KEYDOWN: // Meaning we've pressed the button on a keyboard
-            // Gets key event structure, retrieves the key pressed
-            switch (event.key.keysym.scancode)
+        case SDL_KEYDOWN:                      // Meaning we've pressed the button on a keyboard
+            switch (event.key.keysym.scancode) // Gets key event structure, retrieves the key pressed
             {
             case SDL_SCANCODE_W:
             case SDL_SCANCODE_UP:
@@ -86,6 +85,8 @@ void userInput()
             case SDL_SCANCODE_Z:
                 action.fire = 1;
                 break;
+            case SDL_SCANCODE_LCTRL:
+                CTRL_PRESS = true;
             }
             break;
         case SDL_KEYUP:
@@ -110,6 +111,8 @@ void userInput()
             case SDL_SCANCODE_Z:
                 action.fire = 0;
                 break;
+            case SDL_SCANCODE_LCTRL:
+                CTRL_PRESS = false;
             }
             break;
         }
@@ -121,6 +124,7 @@ void userInput()
         if (player->reload > 0)
             player->reload--;
         player->x_vel = player->y_vel = 0;
+
         if (action.up && !action.down)
             player->y_vel = -SPEED; // If up pressed & NOT down, == negative (==up)
         if (action.down && !action.up)
@@ -130,35 +134,20 @@ void userInput()
         if (action.right && !action.left)
             player->x_vel = SPEED;
 
+        if (CTRL_PRESS == true) // If user press CTRL, make player move at half speed
+        {
+            player->y_vel /= 2;
+            player->x_vel /= 2;
+        }
         // Update positions (divide by 60 as only calculating 1/60th of a second)
         player->x_pos += player->x_vel / 60;
         player->y_pos += player->y_vel / 60;
     }
 }
 
-/*Prepare Scene Function*/
-void prepareScene()
-{
-    SDL_RenderClear(rend);
-}
-
-void presentScene()
-{
-    SDL_RenderPresent(rend);
-}
-
 void initTitle()
 {
-    title = malloc(sizeof(Background));
-    memset(title, 0, sizeof(Background));
-
-    title->rect.x = 0;
-    title->rect.y = 0;
-    title->rect.w = WINDOW_WIDTH;
-    title->rect.h = WINDOW_HEIGHT;
-
-    title->tex = IMG_LoadTexture(rend, "img/title.png");
-
+    title = initSeperateBackground("img/title.png");
     SDL_ShowCursor(1); // Show cursor
 }
 
@@ -192,28 +181,39 @@ void titleLoop()
 void initModes()
 { // Difficulty Levels: Easy, Hard, Lunatic
 
-    modeList = malloc(sizeof(Background));
-    memset(modeList, 0, sizeof(Background));
+    modeList = initSeperateBackground("img/modes.png");
 
+    // Init hover-effect for modes
+    modeEasy = initSeperateBackground("img/modeEasy.png");
+    modeHard = initSeperateBackground("img/modeHard.png");
+    modeLunatic = initSeperateBackground("img/modeLunatic.png");
+
+    // Init mode
     mode = malloc(sizeof(Mode));
     memset(mode, 0, sizeof(Mode));
-
-    modeList->rect.w = WINDOW_WIDTH;
-    modeList->rect.h = WINDOW_HEIGHT;
-    modeList->tex = IMG_LoadTexture(rend, "img/modes.png");
 }
 
+Background *initSeperateBackground(char *imgTex)
+{ // Inititalise background
+
+    Background *background;
+    background = malloc(sizeof(Background));
+    memset(background, 0, sizeof(Background));
+    background->rect.w = WINDOW_WIDTH;
+    background->rect.h = WINDOW_HEIGHT;
+    background->tex = IMG_LoadTexture(rend, imgTex);
+    return background;
+}
 void presentModes()
 {
     SDL_Event event;
-    // SDL_MouseButtonEvent event;
+    bool hoverFlag = false;
     prepareScene();
 
     SDL_RenderCopy(rend, modeList->tex, NULL, &modeList->rect);
     SDL_RenderPresent(rend);
-    
-    SDL_ShowCursor(1); // Show cursor
 
+    SDL_ShowCursor(1); // Show cursor
 
     while (SDL_WaitEvent(&event))
     {
@@ -224,15 +224,58 @@ void presentModes()
             break;
         }
 
+        // If mouse hover
+        if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 210 && event.motion.y <= 290) // check if it is in the desired area
+        {
+            // if (340 <= event.motion.x <= 460 && 210 <= event.motion.y <= 290)
+
+            if (hoverFlag == false)
+            {
+                prepareScene();
+                SDL_RenderCopy(rend, modeEasy->tex, NULL, &modeEasy->rect);
+                SDL_RenderPresent(rend);
+                hoverFlag = true;
+            }
+        }
+
+        else if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 325 && event.motion.y <= 390)
+        {
+            if (hoverFlag == false)
+            {
+                prepareScene();
+                SDL_RenderCopy(rend, modeHard->tex, NULL, &modeHard->rect);
+                SDL_RenderPresent(rend);
+                hoverFlag = true;
+            }
+        }
+
+        else if (event.motion.x >= 315 && event.motion.x <= 482 && event.motion.y >= 443 && event.motion.y <= 505)
+        {
+            if (hoverFlag == false)
+            {
+                prepareScene();
+                SDL_RenderCopy(rend, modeLunatic->tex, NULL, &modeLunatic->rect);
+                SDL_RenderPresent(rend);
+                hoverFlag = true;
+            }
+        }
+        else
+        {
+            hoverFlag = false;
+            prepareScene();
+            SDL_RenderCopy(rend, modeList->tex, NULL, &modeList->rect);
+            SDL_RenderPresent(rend);
+        }
+
         // If the event is mouse click
         if (event.type == SDL_MOUSEBUTTONDOWN)
         {
-             //printf("(%d,%d)\n", event.motion.x, event.motion.y); //print cursor click location
+            // printf("(%d,%d)\n", event.motion.x, event.motion.y); // print cursor click location
 
             // Set mode to corresponding user selection
-            if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 210 && event.motion.y <= 290) // check if it is in the desired area
+            if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 210 && event.motion.y <= 290) // Check if it clicked in specific area
             {
-                mode->easy = true; // whatever mode the mouse area is clicked in will become true
+                mode->easy = true;
                 break;
             }
 
@@ -242,7 +285,7 @@ void presentModes()
                 break;
             }
 
-            else if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 443 && event.motion.y <= 505)
+            else if (event.motion.x >= 315 && event.motion.x <= 482 && event.motion.y >= 443 && event.motion.y <= 505)
             {
                 mode->lunatic = true;
                 break;
@@ -251,7 +294,7 @@ void presentModes()
     }
 }
 
-int returnMode() //1:  Easy, 2: Hard, 3: Lunatic
+int returnMode() // 1: Easy, 2: Hard, 3: Lunatic
 {
     if (mode->easy == true)
     {
@@ -269,13 +312,7 @@ int returnMode() //1:  Easy, 2: Hard, 3: Lunatic
 
 void initBackground()
 {
-    background = malloc(sizeof(Background));
-    memset(background, 0, sizeof(Background));
-
-    background->rect.w = WINDOW_WIDTH;
-    background->rect.h = WINDOW_HEIGHT;
-
-    background->tex = IMG_LoadTexture(rend, "img/background.png");
+    background = initSeperateBackground("img/background.png");
 }
 
 /**Initialise Stage Function*/
@@ -287,6 +324,7 @@ void initStage()
     stage.fairyTail = &stage.fairyHead;
     stage.enemyBulletTail = &stage.enemyBulletHead;
     stage.explosionTail = &stage.explosionHead;
+    stage.powerUpTail = &stage.powerUpHead;
 
     initPlayer();
 
@@ -334,9 +372,17 @@ void resetStage()
         free(e);
     }
 
+    while (stage.powerUpHead.next)
+    {
+        e = stage.powerUpHead.next;
+        stage.powerUpHead.next = e->next;
+        free(e);
+    }
+
     initStage();
 }
 
+/*Restart Game Function*/
 void restartGame()
 {
     SDL_Event restartEvent;
@@ -388,7 +434,7 @@ void initPlayer()
 }
 
 /**Check if player collide with fairy*/
-int playerCollide()
+int playerCollideFairy()
 {
     Entity *f;
 
@@ -400,6 +446,23 @@ int playerCollide()
             player = NULL;
             f->life = 0;
             playerLife--;
+            return true;
+        }
+    }
+    return false;
+}
+
+/**Check if player collide with bullet*/
+int playerCollidePowerUp()
+{
+    Entity *p;
+
+    for (p = stage.powerUpHead.next; p != NULL; p = p->next)
+    {
+        if (SDL_HasIntersection(&player->hitbox, &p->rect) == SDL_TRUE) // Check if Player Rect & powerUp Rect intersect
+        {
+            // Set powerUp life to 0 so it despawns
+            p->life = 0;
             return true;
         }
     }
@@ -518,7 +581,8 @@ int bulletHit(Entity *b)
             // Set bullet & fairy life to 0 so it despawns
             b->life = 0;
             f->life = 0;
-            fireExplosion(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
+            spawnExplosion(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
+            spawnPowerUp(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
 
             playerScore++;
             return true;
@@ -555,7 +619,7 @@ void manipulateExplosion()
 }
 
 /*Initialise & Fire Explosion*/
-void fireExplosion(int x, int y, int w, int h)
+void spawnExplosion(int x, int y, int w, int h)
 {
     Entity *explosion;
 
@@ -598,6 +662,72 @@ void drawEnemyExplosion()
     }
 }
 
+/*PowerUp Update*/
+void manipulatePowerUp()
+{
+    Entity *p, *prev;
+    prev = &stage.powerUpHead;
+
+    // Player Bullet Manipulation
+    for (p = stage.powerUpHead.next; p != NULL; p = p->next)
+    {
+        p->x_pos += p->x_vel / 60;
+        p->y_pos += p->y_vel / 60;
+
+        // Set the positions in the struct
+        p->rect.y = p->y_pos;
+        p->rect.x = p->x_pos;
+
+        // If goes beyond the top of the screen OR BulletLife = 0
+        if (p->y_pos > 600 || p->life == 0)
+        {
+            if (p == stage.powerUpTail)
+            {
+                stage.powerUpTail = prev;
+            }
+            prev->next = p->next;
+            free(p);
+            p = prev;
+        }
+    }
+}
+
+void spawnPowerUp(int x, int y, int w, int h){
+
+    Entity *powerUp;
+
+    powerUp = malloc(sizeof(Entity));
+    memset(powerUp, 0, sizeof(Entity));
+
+    powerUp->tex = IMG_LoadTexture(rend, "img/powerUp.png");
+    SDL_QueryTexture(powerUp->tex, NULL, NULL, &powerUp->rect.w, &powerUp->rect.h);
+
+    powerUp->x_pos = x;
+    powerUp->y_pos = y;
+
+    powerUp->rect.x = x;
+    powerUp->rect.y = y;
+    powerUp->rect.w = w/1.5;
+    powerUp->rect.h = h/1.5;
+
+
+    powerUp->x_vel = 0;
+    powerUp->y_vel = SPEED;
+    powerUp->life = 1;
+
+    stage.powerUpTail->next = powerUp;
+    stage.powerUpTail = powerUp;
+
+}
+
+void drawPowerUp()
+{
+    for (Entity *p = stage.powerUpHead.next; p != NULL; p = p->next)
+    {
+        SDL_RenderCopy(rend, p->tex, NULL, &p->rect);
+    }
+}
+
 /**Initialise Fairies Function*/
 void spawnFairies(char direction)
 {
@@ -635,15 +765,16 @@ void spawnFairies(char direction)
         stage.fairyTail->next = fairy;
         stage.fairyTail = fairy;
 
-        if(returnMode() == 1){
+        if (returnMode() == 1)
+        {
             fairySpawnTimer = 90 + (rand() % 20);
-
         }
-        else if(returnMode() == 2){
+        else if (returnMode() == 2)
+        {
             fairySpawnTimer = 20 + (rand() % 20);
-
         }
-        else if(returnMode() == 3){
+        else if (returnMode() == 3)
+        {
             fairySpawnTimer = 5 + (rand() % 20); // Timer for random enemy creation
         }
 
@@ -790,6 +921,17 @@ void drawEnemyBullets()
     {
         SDL_RenderCopy(rend, b->tex, NULL, &b->rect);
     }
+}
+
+/*Prepare Scene Function*/
+void prepareScene()
+{
+    SDL_RenderClear(rend);
+}
+
+void presentScene()
+{
+    SDL_RenderPresent(rend);
 }
 
 int returnPlayerScore()

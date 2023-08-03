@@ -47,7 +47,9 @@ int main(int argc, char **argv)
         spawnFairies('R');
 
         manipulateExplosion();
-        playerCollide();
+        manipulatePowerUp();
+        playerCollidePowerUp();
+        playerCollideFairy();
 
         if (playerNullCheck())
         {
@@ -67,6 +69,7 @@ int main(int argc, char **argv)
         drawEnemyBullets();
         drawFairy();
         drawEnemyExplosion();
+        drawPowerUp();
         drawStats(returnHighscoreList());
         presentScene();
         SDL_Delay(1000 / 60); // Wait 1/60th of a second

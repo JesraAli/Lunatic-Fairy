@@ -272,22 +272,28 @@ void presentModes()
         {
             // printf("(%d,%d)\n", event.motion.x, event.motion.y); // print cursor click location
 
-            // Set mode to corresponding user selection
+            // Set mode to corresponding user selection && Set Background
             if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 210 && event.motion.y <= 290) // Check if it clicked in specific area
             {
                 mode->easy = true;
+                background = initSeperateBackground("img/easyB.png");
+
                 break;
             }
 
             else if (event.motion.x >= 340 && event.motion.x <= 460 && event.motion.y >= 325 && event.motion.y <= 390)
             {
                 mode->hard = true;
+                background = initSeperateBackground("img/hardB.png");
+
                 break;
             }
 
             else if (event.motion.x >= 315 && event.motion.x <= 482 && event.motion.y >= 443 && event.motion.y <= 505)
             {
                 mode->lunatic = true;
+                background = initSeperateBackground("img/lunaticB.png");
+
                 break;
             }
         }
@@ -308,11 +314,6 @@ int returnMode() // 1: Easy, 2: Hard, 3: Lunatic
     {
         return 3;
     }
-}
-
-void initBackground()
-{
-    background = initSeperateBackground("img/background.png");
 }
 
 /**Initialise Stage Function*/
@@ -692,7 +693,8 @@ void manipulatePowerUp()
     }
 }
 
-void spawnPowerUp(int x, int y, int w, int h){
+void spawnPowerUp(int x, int y, int w, int h)
+{
 
     Entity *powerUp;
 
@@ -707,9 +709,8 @@ void spawnPowerUp(int x, int y, int w, int h){
 
     powerUp->rect.x = x;
     powerUp->rect.y = y;
-    powerUp->rect.w = w/1.5;
-    powerUp->rect.h = h/1.5;
-
+    powerUp->rect.w = w / 1.5;
+    powerUp->rect.h = h / 1.5;
 
     powerUp->x_vel = 0;
     powerUp->y_vel = SPEED;
@@ -717,7 +718,6 @@ void spawnPowerUp(int x, int y, int w, int h){
 
     stage.powerUpTail->next = powerUp;
     stage.powerUpTail = powerUp;
-
 }
 
 void drawPowerUp()

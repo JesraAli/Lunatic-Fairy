@@ -15,7 +15,6 @@ Background *initSeperateBackground(char *);
 void presentModes(void);
 int returnMode(void);
 
-void initBackground(void);
 void initStage(void);
 
 void resetStage(void);

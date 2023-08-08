@@ -4,6 +4,9 @@ Lunatic Fairy is an in development single player 2D shooter game, written in C u
 The game is based off a popular japanese bullet-hell video game.
 
 
+<img src="https://github.com/JesraAli/Lunatic-Fairy/blob/main/img/trailer.gif" width="630" height="480"/>
+
+
 ## Objective
 The objective of the game is for the player to defeat as many fairies as possible to obtain points towards their overall score.
 

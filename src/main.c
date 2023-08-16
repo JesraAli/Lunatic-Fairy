@@ -40,6 +40,7 @@ int main(int argc, char **argv)
             continue;
         }
 
+        manipulateDBullet();
         manipulateFairy();
         fireEnemyBulletCall();
         spawnFairies('L');
@@ -64,6 +65,8 @@ int main(int argc, char **argv)
         rendCopyPlayer();
 
         // Drawing:
+                drawDBullets();
+
         drawBullets();
         drawEnemyBullets();
         drawFairy();

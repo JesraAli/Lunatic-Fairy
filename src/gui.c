@@ -10,9 +10,9 @@ Stage stage;
 Background *background, *title, *modeList, *modeEasy, *modeHard, *modeLunatic;
 Mode *mode;
 
-int playerLife;
-int playerScore;
+int playerLife, playerScore, bulletDiagonal;
 int fairySpawnTimer;
+double PUprobability;
 bool CTRL_PRESS;
 
 /*Load Initialisations Function*/
@@ -322,6 +322,7 @@ void initStage()
     memset(&stage, 0, sizeof(Stage)); // Set stage variables to 0
     stage.playerTail = &stage.playerHead;
     stage.bulletTail = &stage.bulletHead;
+    stage.DBulletTail = &stage.DBulletHead;
     stage.fairyTail = &stage.fairyHead;
     stage.enemyBulletTail = &stage.enemyBulletHead;
     stage.explosionTail = &stage.explosionHead;
@@ -331,6 +332,7 @@ void initStage()
 
     fairySpawnTimer = 0;
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
+    bulletDiagonal = 0;
 }
 
 /**Reset Stage Function*/
@@ -349,6 +351,13 @@ void resetStage()
     {
         e = stage.bulletHead.next;
         stage.bulletHead.next = e->next;
+        free(e);
+    }
+
+    while (stage.DBulletHead.next)
+    {
+        e = stage.DBulletHead.next;
+        stage.DBulletHead.next = e->next;
         free(e);
     }
 
@@ -462,6 +471,7 @@ int playerCollidePowerUp()
     {
         if (SDL_HasIntersection(&player->hitbox, &p->rect) == SDL_TRUE) // Check if Player Rect & powerUp Rect intersect
         {
+            bulletDiagonal = 10;
             // Set powerUp life to 0 so it despawns
             p->life = 0;
             return true;
@@ -493,6 +503,32 @@ void fireBullet()
     bullet->life = 1;
 
     player->reload = 8;
+}
+
+/**Initialise / Fire Diagonal Bullet Function*/
+void fireDiagonalBullet(int x_vel, int y_vel, int distance)
+{
+    Entity *DBullet;
+
+    DBullet = malloc(sizeof(Entity));
+    memset(DBullet, 0, sizeof(Entity));
+
+    DBullet->tex = IMG_LoadTexture(rend, "img/bulletPU.png");
+    SDL_QueryTexture(DBullet->tex, NULL, NULL, &DBullet->rect.w, &DBullet->rect.h);
+    DBullet->rect.w += 15; // Scales image up
+    DBullet->rect.h += 15;
+
+    stage.DBulletTail->next = DBullet;
+    stage.DBulletTail = DBullet;
+
+    DBullet->x_pos = player->x_pos + distance;
+    DBullet->y_pos = player->y_pos;
+    DBullet->x_vel = x_vel;
+    DBullet->y_vel = y_vel;
+    DBullet->life = 1;
+    player->reload = 8;
+
+    bulletDiagonal--; // Decrease bullet diagonal timer
 }
 
 /**Player & Enemy: Bullet Update & Collision Check*/
@@ -561,6 +597,36 @@ void manipulateAllBullets()
     }
 }
 
+void manipulateDBullet()
+{
+
+    Entity *DB, *DBprev;
+    DBprev = &stage.DBulletHead;
+
+    // DIAGONAL Bullet Manipulation
+    for (DB = stage.DBulletHead.next; DB != NULL; DB = DB->next)
+    {
+        DB->x_pos += DB->x_vel / 30;
+        DB->y_pos += DB->y_vel / 30;
+
+        // Set the positions in the struct
+        DB->rect.y = DB->y_pos;
+        DB->rect.x = DB->x_pos;
+
+        // If Diagonal bullet hits enemy OR goes beyond the top of the screen OR BulletLife = 0
+        if (bulletHit(DB) || DB->y_pos < -10 || DB->life == 0)
+        {
+            if (DB == stage.DBulletTail)
+            {
+                stage.DBulletTail = DBprev;
+            }
+            DBprev->next = DB->next;
+            free(DB);
+            DB = DBprev;
+        }
+    }
+}
+
 /**Draw Player Bullets Function*/
 void drawBullets()
 {
@@ -570,10 +636,19 @@ void drawBullets()
     }
 }
 
+void drawDBullets()
+{
+    for (Entity *DB = stage.DBulletHead.next; DB != NULL; DB = DB->next)
+    {
+        SDL_RenderCopy(rend, DB->tex, NULL, &DB->rect);
+    }
+}
+
 /**Check if Bullet intersect / hit Fairy*/
 int bulletHit(Entity *b)
 {
     Entity *f;
+    PUprobability = 0.2; // Probability of a powerUp spawning
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
@@ -583,7 +658,13 @@ int bulletHit(Entity *b)
             b->life = 0;
             f->life = 0;
             spawnExplosion(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
-            spawnPowerUp(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
+
+            // Randomley spawn a powerUp
+            double chance = (double)rand() / (double)RAND_MAX;
+            if (chance < PUprobability)
+            {
+                spawnPowerUp(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
+            }
 
             playerScore++;
             return true;
@@ -992,9 +1073,28 @@ void collisionDetection()
         player->hitbox.x = player->x_pos + 30; //+ = right, - is left
     }
 
+    // Fire Left & Right Diagonal Bullets (when collected PU)
+    if (bulletDiagonal != 0 && player->reload == 0)
+    {
+        fireDiagonalBullet(250, -SPEED - 500, 30);
+        fireDiagonalBullet(-260, -SPEED - 500, -5);
+
+        //Allow normal bullets to fire when Diagonal Bullets are firing
+        if (action.fire)
+        {
+            fireBullet();
+        }
+    }
+    // fire player bullet
     if (action.fire && player->reload == 0)
     {
         fireBullet();
+    }
+
+    if (bulletDiagonal == -1)
+    {
+        printf("it is -1 now :(\n");
+        bulletDiagonal = 10;
     }
 }
 

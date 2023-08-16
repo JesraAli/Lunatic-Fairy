@@ -33,11 +33,11 @@ typedef struct
 { // Linked lists for players, bullets, fairies, explosions
     Entity playerHead, *playerTail;
     Entity bulletHead, *bulletTail;
+    Entity DBulletHead, *DBulletTail;
     Entity fairyHead, *fairyTail;
     Entity enemyBulletHead, *enemyBulletTail;
     Entity explosionHead, *explosionTail;
     Entity powerUpHead, *powerUpTail;
-    
 } Stage;
 
 typedef struct

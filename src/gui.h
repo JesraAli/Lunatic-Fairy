@@ -25,8 +25,11 @@ int playerCollideFairy(void);
 int playerCollidePowerUp(void);
 
 void fireBullet(void);
+void fireDiagonalBullet(int x_vel,int y_vel, int distance);
 void manipulateAllBullets(void);
+void manipulateDBullet(void);
 void drawBullets(void);
+void drawDBullets(void);
 int bulletHit(Entity *b);
 
 void manipulateExplosion();

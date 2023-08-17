@@ -1,4 +1,9 @@
 #include "gui.h"
+#include <enet/enet.h>
+
+//Different channels for packet passing
+#define BULLET_CHANNEL 0
+#define PLAYER_CHANNEL 1
 
 // Variables
 SDL_Window *win;
@@ -1057,7 +1062,7 @@ void collisionDetection()
     if (player != NULL)
     {
         if (player->x_pos <= 0)
-            player->x_pos = 0; // Reset positions to keep in window
+            player->x_pos = 0; // RCHANNEL_IDeset positions to keep in window
         if (player->y_pos <= 0)
             player->y_pos = 0;
         if (player->x_pos >= WINDOW_WIDTH - player->rect.w)
@@ -1079,7 +1084,7 @@ void collisionDetection()
         fireDiagonalBullet(250, -SPEED - 500, 30);
         fireDiagonalBullet(-260, -SPEED - 500, -5);
 
-        //Allow normal bullets to fire when Diagonal Bullets are firing
+        // Allow normal bullets to fire when Diagonal Bullets are firing
         if (action.fire)
         {
             fireBullet();
@@ -1156,3 +1161,17 @@ int end()
     SDL_Quit();
     exit(0);
 }
+
+/*Packet Creation*/
+// ENetPacket *bulletPackets(ENetPeer *server) // Loop through the linked list and create packets for each bullet
+// {
+//     Entity *b;
+
+//     for (b = stage.bulletHead.next; b != NULL; b = b->next)
+//     {
+//         ENetPacket *packet = enet_packet_create(b, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
+//         // enet_peer_send(peer, BULLET_CHANNEL, packet); //Send packet to the host/server
+//         enet_host_broadcast(server, BULLET_CHANNEL, packet); //Send packet to ALL connected clients instead
+
+//     }
+// }

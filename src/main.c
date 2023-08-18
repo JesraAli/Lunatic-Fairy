@@ -4,69 +4,87 @@
 #include "highscoreInfo.h"
 #include <enet/enet.h>
 #include "client.h"
+#include <pthread.h>
+#include "server.h" // Include the modified header
+
+
 // #include "server.h"
+
+// Define the structure to pass arguments to the server thread
+struct ServerThreadArgs {
+    ENetHost *server;
+    // ENetEvent *eventVar;
+};
+
+
+// Function to run the server in a separate thread
+// void *serverThreadFunction(void *arg) {
+//     struct ServerThreadArgs *args = (struct ServerThreadArgs *)arg;
+//     runServer(args->server);
+//     return NULL;
+// }
+
+
+void *serverThreadFunction(void *arg) {
+    runServer(); // Call the refactored server code
+    return NULL;
+}
+
 
 /*Main Function*/
 int main(int argc, char **argv)
 {
 
-    // // Initialise ENet
+    // // Initialize ENet for server
     // if (enet_initialize() != 0)
     // {
-    //     fprintf(stderr, "Error initializing ENet.\n");
+    //     printf("An error occurred while initializing ENet for server.\n");
+    //     return 1;
+    // }
+    // atexit(enet_deinitialize);
+
+    // ENetHost *server = initServer();
+
+    // // Create a thread for the server
+    // pthread_t serverThread;
+    // // ENetEvent eventS; // Initialise ENetEvent variable
+    // struct ServerThreadArgs args;
+    // args.server = server;
+    // // args.eventVar = &eventS; // Pass a pointer to the event
+
+    // if (pthread_create(&serverThread, NULL, serverThreadFunction, &args) != 0) {
+    //     printf("Failed to create server thread.\n");
     //     return 1;
     // }
 
-    // // Initialize server
-    // ENetHost *server = initialiseServer();
-    // if (server == NULL)
-    // {
-    //     // Handle the error here, for example, print an error message and exit.
-    //     fprintf(stderr, "Failed to initialize the server.\n");
-    //     return EXIT_FAILURE;
-    // }
-
-    // // Initialize client
-    // ENetHost *client;
-    // client = enet_host_create(NULL /* create a client host */,
-    //                                     10 /* allow 10 outgoing connections */,
-    //                                     2 /* allow up 2 channels to be used, 0 and 1 */,
-    //                                     0 /* assume any amount of incoming bandwidth */,
-    //                                     0 /* assume any amount of outgoing bandwidth */);
-    // if (client == NULL)
-    // {
-    //     fprintf(stderr, "Error occurred while trying to create an ENet client host.\n");
-    //     return EXIT_FAILURE;
-    // }
-
-    // // Add a short delay (for example, 1 second) before connecting
-    // sleep(1);
-
-    // connectToServer(client, "127.0.0.1", 1234);
-
-    if (enet_initialize() != 0)
-    {
-        fprintf(stderr, "Error initializing ENet.\n");
+    pthread_t serverThread;
+    if (pthread_create(&serverThread, NULL, serverThreadFunction, NULL) != 0) {
+        printf("Failed to create server thread.\n");
         return 1;
     }
 
-    // ENetHost *server = initialiseServer();
-    //     sleep(10);
 
+    // Initialize ENet for Client Host & Connection
+    if (enet_initialize() != 0)
+    {
+        printf("An error occurred while initializing ENet for client.\n");
+        return 1;
+    }
+    atexit(enet_deinitialize);
+    ENetEvent eventC;
 
-    ENetHost *client;
-    client = enet_host_create(NULL /* create a client host */,
-                              1 /* only allow 1 outgoing connection */,
-                              2 /* allow up 2 channels to be used, 0 and 1 */,
-                              0 /* assume any amount of incoming bandwidth */,
-                              0 /* assume any amount of outgoing bandwidth */);
+    ENetHost *client = enet_host_create(NULL /* create a client host */,
+                                        1 /* only allow 1 outgoing connection */,
+                                        2 /* allow up 2 channels to be used, 0 and 1 */,
+                                        0 /* assume any amount of incoming bandwidth */,
+                                        0 /* assume any amount of outgoing bandwidth */);
+
     if (client == NULL)
     {
-        fprintf(stderr, "An error occurred while trying to create an ENet client host.\n");
-        return EXIT_FAILURE;
+        printf("An error occurred while trying to create an ENet client host.\n");
+        return 1;
     }
-
-    connectToServer(client, "127.0.0.1", 1234);
+    connectToServer(client, &eventC);
 
     load();
     initStage();
@@ -78,22 +96,6 @@ int main(int argc, char **argv)
 
     while (true)
     {
-
-        // ENetEvent event;
-
-        // // Handle events for both server and client
-        // while (enet_host_service(server, &event, 0) > 0 || enet_host_service(client, &event, 0) > 0)
-        // {
-        //     if (event.type == ENET_EVENT_TYPE_CONNECT)
-        //     {
-        //         // Handle the new client connection
-        //         printf("A new client connected from %x:%u.\n",
-        //                event.peer->address.host,
-        //                event.peer->address.port);
-
-        //         event.peer->data = "Client information"; // Store any relevant client information here.
-        //     }
-        // }
 
         if (returnPlayerLife() == 0)
         {
@@ -158,7 +160,12 @@ int main(int argc, char **argv)
         SDL_Delay(1000 / 60); // Wait 1/60th of a second
     }
 
+    // Join the server thread after the client loop is done
+    // pthread_join(serverThread, NULL);
+        pthread_join(serverThread, NULL);
+
     enet_host_destroy(client); // Cleanup
+    // cleanupServer(server);
     enet_deinitialize();
     end();
 }

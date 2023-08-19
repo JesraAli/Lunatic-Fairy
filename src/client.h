@@ -2,5 +2,5 @@
 #define CLIENT_H
 
 #include <enet/enet.h>
-void connectToServer(ENetHost *client, ENetEvent *event);
+void runClient(int serverPort);
 #endif

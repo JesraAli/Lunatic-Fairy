@@ -2,5 +2,8 @@
 #define SERVER_H
 
 #include <enet/enet.h>
-ENetHost *runServer(void);
+void runServer(int serverPort);
+ENetHost* returnServerVar(void);
+bool returnSecondClientState(void);
+
 #endif

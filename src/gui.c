@@ -1,7 +1,8 @@
 #include "gui.h"
 #include <enet/enet.h>
+#include "server.h"
 
-//Different channels for packet passing
+// Different channels for packet passing
 #define BULLET_CHANNEL 0
 #define PLAYER_CHANNEL 1
 
@@ -12,13 +13,15 @@ SDL_Surface *surface;
 Entity *player;
 Action action;
 Stage stage;
-Background *background, *title, *modeList, *modeEasy, *modeHard, *modeLunatic;
+Background *background, *title, *modeList, *modeEasy, *modeHard, *modeLunatic, *loading;
 Mode *mode;
 
 int playerLife, playerScore, bulletDiagonal;
 int fairySpawnTimer;
 double PUprobability;
 bool CTRL_PRESS;
+bool multiplayer;
+Entity players[2]; // 2 == max amount of players
 
 /*Load Initialisations Function*/
 int load()
@@ -156,6 +159,32 @@ void initTitle()
     SDL_ShowCursor(1); // Show cursor
 }
 
+void loadingScreen()
+{
+    loading = initSeperateBackground("img/loading.png");
+    SDL_RenderCopy(rend, loading->tex, NULL, &loading->rect);
+    SDL_RenderPresent(rend);
+
+    while (returnSecondClientState() != true)
+    {
+        printf("%d\n", returnSecondClientState()); // prints 1
+
+        SDL_Event event;
+
+        // Handle SDL events
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+            {
+                end();
+            }
+        }
+
+        // Delay for a short period before checking again
+        SDL_Delay(100); // Delay for 100 milliseconds
+    }
+}
+
 void titleLoop()
 {
     SDL_Event event;
@@ -180,6 +209,26 @@ void titleLoop()
             presentModes();
             break;
         }
+
+        if (event.key.keysym.scancode == SDL_SCANCODE_M)
+        { // Go to screen with list of difficulties
+            multiplayer = true;
+            initModes();
+            presentModes();
+            break;
+        }
+    }
+}
+
+bool returnMultiplayerStatus()
+{
+    if (multiplayer == true)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -325,7 +374,7 @@ int returnMode() // 1: Easy, 2: Hard, 3: Lunatic
 void initStage()
 {
     memset(&stage, 0, sizeof(Stage)); // Set stage variables to 0
-    stage.playerTail = &stage.playerHead;
+    // stage.playerTail = &stage.playerHead;
     stage.bulletTail = &stage.bulletHead;
     stage.DBulletTail = &stage.DBulletHead;
     stage.fairyTail = &stage.fairyHead;
@@ -333,7 +382,7 @@ void initStage()
     stage.explosionTail = &stage.explosionHead;
     stage.powerUpTail = &stage.powerUpHead;
 
-    initPlayer();
+    initPlayers();
 
     fairySpawnTimer = 0;
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
@@ -345,12 +394,7 @@ void resetStage()
 {
     Entity *e;
 
-    while (stage.playerHead.next)
-    {
-        e = stage.playerHead.next;
-        stage.playerHead.next = e->next;
-        free(e);
-    }
+    free(player); // Free player1
 
     while (stage.bulletHead.next)
     {
@@ -418,15 +462,24 @@ void restartGame()
     }
 }
 
+void initPlayers()
+{
+    // if (singlePlayer)
+    // {
+    //     initPlayer();
+    // }
+    // else
+    // {
+    initPlayer();
+    players[0] = initPlayer2();
+
+    // }
+}
 /**Initialise Player Function*/
 void initPlayer()
 {
     player = malloc(sizeof(Entity));
     memset(player, 0, sizeof(Entity)); // Set player variables to 0
-
-    // Player object added to player linked list
-    stage.playerTail->next = player;
-    stage.playerTail = player;
 
     player->tex = IMG_LoadTexture(rend, "img/sprite.png"); // Create texture for player
 
@@ -446,6 +499,39 @@ void initPlayer()
     // Initial sprite velocity 0 (because keyboard controls it)
     player->x_vel = 0;
     player->y_vel = 0;
+
+    player->playerID = 1; // 1 for local player, 2 for 2nd player
+}
+
+/**Initialise Player2 Function*/
+Entity initPlayer2()
+{
+    Entity player2;
+    // player2 = malloc(sizeof(Entity));
+    memset(&player2, 0, sizeof(Entity)); // Set player variables to 0
+
+    player2.tex = IMG_LoadTexture(rend, "img/touhouSprite.png"); // Create texture for player
+
+    // Get & Scale dimensions of texture:
+    SDL_QueryTexture(player->tex, NULL, NULL, &player2.rect.w, &player2.rect.h);
+    player2.rect.w += 35; // scales image up
+    player2.rect.h += 40;
+
+    // Hitbox Scaling
+    player2.hitbox.w = player2.rect.w / 20;
+    player2.hitbox.h = player2.rect.h / 5;
+
+    // Sprite in centre of screen at start
+    player2.x_pos = (WINDOW_WIDTH - player2.rect.w) / 2;
+    player2.y_pos = (WINDOW_HEIGHT - player2.rect.h) / 2;
+
+    // Initial sprite velocity 0 (because keyboard controls it)
+    player2.x_vel = 0;
+    player2.y_vel = 0;
+
+    player2.playerID = 2; // 0 for local player, 1 for 2nd player
+
+    return player2;
 }
 
 /**Check if player collide with fairy*/
@@ -1162,16 +1248,80 @@ int end()
     exit(0);
 }
 
-/*Packet Creation*/
-// ENetPacket *bulletPackets(ENetPeer *server) // Loop through the linked list and create packets for each bullet
-// {
-//     Entity *b;
+/*PACKETS:*/
 
-//     for (b = stage.bulletHead.next; b != NULL; b = b->next)
-//     {
-//         ENetPacket *packet = enet_packet_create(b, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
-//         // enet_peer_send(peer, BULLET_CHANNEL, packet); //Send packet to the host/server
-//         enet_host_broadcast(server, BULLET_CHANNEL, packet); //Send packet to ALL connected clients instead
+/*Bullet Packet Creation*/
+ENetPacket *bulletPackets(ENetPeer *server) // Loop through the linked list and create packets for each bullet
+{
+    Entity *b;
 
-//     }
-// }
+    for (b = stage.bulletHead.next; b != NULL; b = b->next)
+    {
+        ENetPacket *packet = enet_packet_create(b, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
+        // enet_peer_send(peer, BULLET_CHANNEL, packet); //Send packet to the host/server
+        enet_host_broadcast(server, BULLET_CHANNEL, packet); // Send packet to ALL connected clients instead
+    }
+}
+
+// Function to process received bullet packet
+void processBulletPacket(ENetPacket *packet)
+{
+    // Extract bullet data from the packet
+    Entity *receivedBullet = (Entity *)packet->data;
+
+    // Copy the received bullet data into a new local bullet entity (in case the recieved bullet state gets modified at any point)
+    Entity *localBullet = (Entity *)malloc(sizeof(Entity));
+    memcpy(localBullet, receivedBullet, sizeof(Entity));
+
+    // Add the local bullet to your local bullet linked list
+    localBullet->next = NULL;
+    if (stage.bulletTail == NULL)
+    {
+        stage.bulletHead.next = localBullet;
+        stage.bulletTail = localBullet;
+    }
+    else
+    {
+        stage.bulletTail->next = localBullet;
+        stage.bulletTail = localBullet;
+    }
+
+    printf("Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
+}
+
+/*Player Packet Creation (Sending local player variable)*/
+ENetPacket *playerPackets(ENetPeer *server)
+{
+    // Only send a packet if the player has moved (check x and y velocities)
+    if (player->x_vel != 0 || player->y_vel != 0)
+    {
+        ENetPacket *packet = enet_packet_create(player, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
+        enet_host_broadcast(server, PLAYER_CHANNEL, packet);
+    }
+}
+
+// Function to process received player packet
+void processPlayerPacket(ENetPacket *packet)
+{
+    // Extract player data from the packet
+    Entity *receivedPlayer = (Entity *)packet->data;
+
+    // Update the corresponding player entity in your local array
+    if (receivedPlayer->playerID == 1)
+    {
+        // // Update local player data
+        // memcpy(&player, receivedPlayer, sizeof(Entity));
+        printf("Received 1 Player! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+    }
+    else if (receivedPlayer->playerID == 2)
+    {
+        // Update remote player data
+        memcpy(&players[0], receivedPlayer, sizeof(Entity));
+        printf("Received 2 player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+    }
+}
+
+void rendCopyPlayer2()
+{
+    SDL_RenderCopy(rend, &players[0].tex, NULL, &players[0].rect);
+}

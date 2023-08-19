@@ -3,11 +3,14 @@
 #include "libs.h"
 #include "structs.h"
 #include "highscoreInfo.h"
+#include <enet/enet.h>
 
 int load(void);
 void userInput(void);
 void initTitle(void);
 void titleLoop(void);
+bool returnMultiplayerStatus(void);
+void loadingScreen(void);
 
 void initModes(void);
 Background *initSeperateBackground(char *);
@@ -20,7 +23,10 @@ void initStage(void);
 void resetStage(void);
 void restartGame(void);
 
+void initPlayers(void);
 void initPlayer(void);
+Entity initPlayer2(void);
+
 int playerCollideFairy(void);
 int playerCollidePowerUp(void);
 
@@ -62,5 +68,14 @@ void collisionDetection(void);
 void drawText(int x, int y, int r, int g, int b, char *format, ...);
 
 int end(void);
+
+ENetPacket *bulletPackets(ENetPeer *server);
+void processBulletPacket(ENetPacket *packet);
+
+ENetPacket *playerPackets(ENetPeer *server);
+void processPlayerPacket(ENetPacket *packet);
+
+void rendCopyPlayer2(void);
+
 
 #endif

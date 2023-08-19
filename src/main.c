@@ -7,84 +7,69 @@
 #include <pthread.h>
 #include "server.h" // Include the modified header
 
+void multiplayerCheck();
 
-// #include "server.h"
+pthread_t serverThread;
+pthread_t clientThread;
+int serverPort;
 
 // Define the structure to pass arguments to the server thread
-struct ServerThreadArgs {
+struct ServerThreadArgs
+{
     ENetHost *server;
-    // ENetEvent *eventVar;
+    int serverPort;
 };
 
+void *serverThreadFunction(void *arg)
+{
+    int serverPort = *((int *)arg); // Get the server port from the argument
 
-// Function to run the server in a separate thread
-// void *serverThreadFunction(void *arg) {
-//     struct ServerThreadArgs *args = (struct ServerThreadArgs *)arg;
-//     runServer(args->server);
-//     return NULL;
-// }
-
-
-void *serverThreadFunction(void *arg) {
-    runServer(); // Call the refactored server code
+    runServer(serverPort);
     return NULL;
 }
 
+void *clientThreadFunction(void *arg)
+{
+    int serverPort = *((int *)arg); // Get the server port from the argument
+
+    runClient(serverPort);
+    return NULL;
+}
 
 /*Main Function*/
 int main(int argc, char **argv)
 {
 
-    // // Initialize ENet for server
-    // if (enet_initialize() != 0)
-    // {
-    //     printf("An error occurred while initializing ENet for server.\n");
-    //     return 1;
-    // }
-    // atexit(enet_deinitialize);
+    char *serverAddress = NULL;
+    serverPort = 0;
 
-    // ENetHost *server = initServer();
-
-    // // Create a thread for the server
-    // pthread_t serverThread;
-    // // ENetEvent eventS; // Initialise ENetEvent variable
-    // struct ServerThreadArgs args;
-    // args.server = server;
-    // // args.eventVar = &eventS; // Pass a pointer to the event
-
-    // if (pthread_create(&serverThread, NULL, serverThreadFunction, &args) != 0) {
-    //     printf("Failed to create server thread.\n");
-    //     return 1;
-    // }
-
-    pthread_t serverThread;
-    if (pthread_create(&serverThread, NULL, serverThreadFunction, NULL) != 0) {
-        printf("Failed to create server thread.\n");
-        return 1;
-    }
-
-
-    // Initialize ENet for Client Host & Connection
-    if (enet_initialize() != 0)
+    // Parse command-line arguments
+    if (argc < 4)
     {
-        printf("An error occurred while initializing ENet for client.\n");
+        printf("Usage: %s -server <server_ip> -port <server_port>\n", argv[0]);
         return 1;
     }
-    atexit(enet_deinitialize);
-    ENetEvent eventC;
-
-    ENetHost *client = enet_host_create(NULL /* create a client host */,
-                                        1 /* only allow 1 outgoing connection */,
-                                        2 /* allow up 2 channels to be used, 0 and 1 */,
-                                        0 /* assume any amount of incoming bandwidth */,
-                                        0 /* assume any amount of outgoing bandwidth */);
-
-    if (client == NULL)
+    for (int i = 1; i < argc - 1; i += 2)
     {
-        printf("An error occurred while trying to create an ENet client host.\n");
+        if (strcmp(argv[i], "-server") == 0)
+        {
+            serverAddress = argv[i + 1];
+        }
+        else if (strcmp(argv[i], "-port") == 0)
+        {
+            serverPort = atoi(argv[i + 1]);
+        }
+        else
+        {
+            printf("Unknown option: %s\n", argv[i]);
+            return 1;
+        }
+    }
+    if (serverAddress == NULL || serverPort == 0)
+    {
+        printf("Missing or invalid arguments. Usage: %s -server <server_ip> -port <server_port>\n", argv[0]);
         return 1;
     }
-    connectToServer(client, &eventC);
 
     load();
     initStage();
@@ -93,6 +78,8 @@ int main(int argc, char **argv)
 
     titleLoop();
     SDL_ShowCursor(0); // Hide cursor
+
+    multiplayerCheck();
 
     while (true)
     {
@@ -103,6 +90,7 @@ int main(int argc, char **argv)
             drawHighscores(returnHighscoreList());
             presentScene();
             restartGame(); // Restart the game
+            multiplayerCheck();
         }
 
         prepareScene(); // Prepare Scene (Background & Clear)
@@ -131,8 +119,12 @@ int main(int argc, char **argv)
         playerCollidePowerUp();
         playerCollideFairy();
 
-        // Create & send packets for all entities
-        // bulletPackets(server);
+        // // Create & send packets for all entities
+        if (returnMultiplayerStatus() == true)
+        {
+            // bulletPackets(returnServerVar());
+            playerPackets(returnServerVar());
+        }
 
         if (playerNullCheck())
         {
@@ -147,6 +139,11 @@ int main(int argc, char **argv)
 
         rendCopyPlayer();
 
+        if (returnMultiplayerStatus() == true)
+        {
+            rendCopyPlayer2();
+        }
+
         // Drawing:
         drawDBullets();
 
@@ -160,12 +157,44 @@ int main(int argc, char **argv)
         SDL_Delay(1000 / 60); // Wait 1/60th of a second
     }
 
-    // Join the server thread after the client loop is done
-    // pthread_join(serverThread, NULL);
-        pthread_join(serverThread, NULL);
+    if (returnMultiplayerStatus() == true)
+    {
+        pthread_join(serverThread, NULL); // Join server thread
+        pthread_join(clientThread, NULL); // Join server thread
 
-    enet_host_destroy(client); // Cleanup
-    // cleanupServer(server);
-    enet_deinitialize();
+        // enet_host_destroy(client);        // Cleanup
+        enet_deinitialize();
+    }
     end();
+}
+
+void multiplayerCheck()
+{
+    bool multiplayer = returnMultiplayerStatus();
+
+    if (multiplayer == true)
+    {
+        printf("Multiplayer Mode: true\n");
+        // Create Server Thread
+        // pthread_t serverThread;
+        if (pthread_create(&serverThread, NULL, serverThreadFunction, &serverPort) != 0)
+        {
+            printf("Failed to create server thread.\n");
+            return;
+        }
+
+        // Create Client Thread
+        // pthread_t clientThread;
+        if (pthread_create(&clientThread, NULL, clientThreadFunction, &serverPort) != 0)
+        {
+            printf("Failed to create client thread.\n");
+            return;
+        }
+    }
+    else
+    {
+        printf("Multiplayer Mode: false :(\n");
+    }
+
+    loadingScreen();
 }

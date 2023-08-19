@@ -23,6 +23,7 @@ typedef struct Entity
     int expVisibility;
     bool leftDir;
     bool rightDir;
+    int playerID; //0 for local player, 1 for 2nd player
     SDL_Texture *tex;
     SDL_Rect rect;
     SDL_Rect hitbox;
@@ -31,7 +32,7 @@ typedef struct Entity
 
 typedef struct
 { // Linked lists for players, bullets, fairies, explosions
-    Entity playerHead, *playerTail;
+    // Entity playerHead, *playerTail;
     Entity bulletHead, *bulletTail;
     Entity DBulletHead, *DBulletTail;
     Entity fairyHead, *fairyTail;

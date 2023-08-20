@@ -4,6 +4,6 @@
 #include <enet/enet.h>
 void runServer(int serverPort);
 ENetHost* returnServerVar(void);
-bool returnSecondClientState(void);
-
+void sendSecondClientStatus(bool status);
+void sendServerPointer(ENetPeer *clientPeer, const ENetAddress *serverAddress)
 #endif

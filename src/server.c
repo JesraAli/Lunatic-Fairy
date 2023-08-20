@@ -10,8 +10,14 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+// Different channels for packet passing
+#define BULLETANDSTATUS_CHANNEL 0
+#define PLAYER_CHANNEL 1
+#define STATUS_CHANNEL 2
+
 ENetHost *server;
-bool secondClientJoined;
+
+bool secondClientJoined = false;
 
 void runServer(int serverPort)
 {
@@ -21,7 +27,7 @@ void runServer(int serverPort)
     if (enet_initialize())
     {
         printf("Server: An error occurred while initializing ENet.\n");
-        return 1;
+        return;
     }
     atexit(enet_deinitialize);
     ENetAddress address;
@@ -39,7 +45,7 @@ void runServer(int serverPort)
     if (server == NULL)
     {
         printf("Server: An error occurred while trying to create an ENet server host.\n");
-        return 1;
+        return;
     }
 
     printf("Server: started and listening on port %d.\n", address.port);
@@ -52,13 +58,16 @@ void runServer(int serverPort)
             {
             case ENET_EVENT_TYPE_CONNECT:
             {
+                printf("Server: A new client connected from %x:%u.\n", event.peer->address.host, event.peer->address.port);
                 clientCount++;
                 if (clientCount == 2)
                 {
-                    secondClientJoined = true;
-                    printf("Client is now set to trueeeeeeeeeeee\n");
+                    // secondClientJoined = true;
+                    sendSecondClientStatus(true); // Notify clients that the second client has joined
+                    ENetAddress serverAddress = server->address;
+                    sendServerPointer(event.peer, &serverAddress);
+                    // sendServerPointer(event.peer); // Send the server pointer to the second client
                 }
-                printf("Server: A new client connected from %x:%u.\n", event.peer->address.host, event.peer->address.port);
                 event.peer->data = (void *)"Client information";
                 break;
             }
@@ -70,7 +79,7 @@ void runServer(int serverPort)
             }
             case ENET_EVENT_TYPE_DISCONNECT:
             {
-                printf("Server: Disconnected.\n");
+                printf("Server: Disconnected. Peer data: %s. Reason: %u\n", (char *)event.peer->data, event.data);
                 event.peer->data = NULL;
                 break;
             }
@@ -88,7 +97,17 @@ ENetHost *returnServerVar()
     return server;
 }
 
-bool returnSecondClientState()
+// Function to send status update to clients
+void sendSecondClientStatus(bool status)
 {
-    return secondClientJoined;
+    ENetPacket *packet = enet_packet_create(&status, sizeof(bool), ENET_PACKET_FLAG_RELIABLE);
+    enet_host_broadcast(server, BULLETANDSTATUS_CHANNEL, packet);
+}
+
+void sendServerPointer(ENetPeer *clientPeer, const ENetAddress *serverAddress)
+{
+    // Create  packet containing the server pointer
+    ENetPacket *packet = enet_packet_create(&server, sizeof(ENetHost *), ENET_PACKET_FLAG_RELIABLE);
+
+    enet_peer_send(clientPeer, BULLETANDSTATUS_CHANNEL, packet);
 }

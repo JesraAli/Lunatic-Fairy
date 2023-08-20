@@ -3,8 +3,16 @@
 #include "server.h"
 
 // Different channels for packet passing
-#define BULLET_CHANNEL 0
+#define BULLETANDSTATUS_CHANNEL 0
 #define PLAYER_CHANNEL 1
+#define STATUS_CHANNEL 2
+
+extern bool secondClientJoined;
+// Function to be called by the client thread to signal that the second client has joined
+void signalSecondClientJoined()
+{
+    secondClientJoined = true;
+}
 
 // Variables
 SDL_Window *win;
@@ -165,12 +173,9 @@ void loadingScreen()
     SDL_RenderCopy(rend, loading->tex, NULL, &loading->rect);
     SDL_RenderPresent(rend);
 
-    while (returnSecondClientState() != true)
+    while (secondClientJoined != true)
     {
-        printf("%d\n", returnSecondClientState()); // prints 1
-
         SDL_Event event;
-
         // Handle SDL events
         while (SDL_PollEvent(&event))
         {
@@ -179,7 +184,6 @@ void loadingScreen()
                 end();
             }
         }
-
         // Delay for a short period before checking again
         SDL_Delay(100); // Delay for 100 milliseconds
     }
@@ -1259,7 +1263,7 @@ ENetPacket *bulletPackets(ENetPeer *server) // Loop through the linked list and 
     {
         ENetPacket *packet = enet_packet_create(b, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
         // enet_peer_send(peer, BULLET_CHANNEL, packet); //Send packet to the host/server
-        enet_host_broadcast(server, BULLET_CHANNEL, packet); // Send packet to ALL connected clients instead
+        enet_host_broadcast(server, BULLETANDSTATUS_CHANNEL, packet); // Send packet to ALL connected clients instead
     }
 }
 
@@ -1290,13 +1294,15 @@ void processBulletPacket(ENetPacket *packet)
 }
 
 /*Player Packet Creation (Sending local player variable)*/
-ENetPacket *playerPackets(ENetPeer *server)
+ENetPacket *playerPackets(ENetHost *server)
 {
     // Only send a packet if the player has moved (check x and y velocities)
     if (player->x_vel != 0 || player->y_vel != 0)
     {
         ENetPacket *packet = enet_packet_create(player, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
+        printf("Just created Player packet\n");
         enet_host_broadcast(server, PLAYER_CHANNEL, packet);
+        printf("Broadcasted Player Packet!\n");
     }
 }
 
@@ -1310,7 +1316,6 @@ void processPlayerPacket(ENetPacket *packet)
     if (receivedPlayer->playerID == 1)
     {
         // // Update local player data
-        // memcpy(&player, receivedPlayer, sizeof(Entity));
         printf("Received 1 Player! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
     }
     else if (receivedPlayer->playerID == 2)

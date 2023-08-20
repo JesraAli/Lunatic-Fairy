@@ -8,10 +8,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gui.h"
+#include <pthread.h>
 
 // Different channels for packet passing
-#define BULLET_CHANNEL 0
+#define BULLETANDSTATUS_CHANNEL 0
 #define PLAYER_CHANNEL 1
+#define STATUS_CHANNEL 2
+
+extern bool secondClientJoined;
+ENetHost *receivedServer;
 
 void runClient(int serverPort)
 {
@@ -19,7 +24,7 @@ void runClient(int serverPort)
     if (enet_initialize() != 0)
     {
         printf("Client: An error occurred while initializing ENet for client.\n");
-        return 1;
+        return;
     }
     atexit(enet_deinitialize);
     ENetEvent event;
@@ -79,11 +84,25 @@ void runClient(int serverPort)
             case ENET_EVENT_TYPE_RECEIVE:
 
                 // Handle received packets based on packet type
-                if (event.channelID == BULLET_CHANNEL)
+                if (event.channelID == BULLETANDSTATUS_CHANNEL)
                 {
-                    printf("Client: BULLET Packet data recieved\n");
-                    // Process bullet packet and update your local game state
-                    processBulletPacket(event.packet);
+                    if (event.packet->dataLength == sizeof(bool))
+                    {
+                        printf("Client: STATUS Packet data recieved\n");
+                        signalSecondClientJoined(); // Signal the gui.c function
+                    }
+                    else if (event.packet->dataLength == sizeof(ENetHost *))
+                    {
+                        printf("Client: SERVER variable recieved\n");
+                        receivedServer = NULL;
+                        memcpy(&receivedServer, event.packet->data, sizeof(ENetHost *));
+                    }
+                    else
+                    {
+                        printf("Client: BULLET Packet data recieved\n");
+                        // Process bullet packet and update local game state
+                        processBulletPacket(event.packet);
+                    }
                 }
 
                 // Handle received packets based on packet type
@@ -95,8 +114,9 @@ void runClient(int serverPort)
                 }
                 enet_packet_destroy(event.packet);
                 break;
+
             case ENET_EVENT_TYPE_DISCONNECT:
-                printf("Disconnected.\n");
+                printf("Client: Disconnected.\n");
                 break;
                 event.peer->data = NULL;
                 break;
@@ -107,52 +127,6 @@ void runClient(int serverPort)
     }
 }
 
-// int main()
-// {
-//     if (enet_initialize())
-//     {
-//         printf("An error occurred while initializing ENet.\n");
-//         return 1;
-//     }
-//     atexit(enet_deinitialize);
-//     ENetEvent event;
-
-//     ENetHost *client = enet_host_create(NULL /* create a client host */,
-//                                         1 /* only allow 1 outgoing connection */,
-//                                         2 /* allow up 2 channels to be used, 0 and 1 */,
-//                                         0 /* assume any amount of incoming bandwidth */,
-//                                         0 /* assume any amount of outgoing bandwidth */);
-//     if (client == NULL)
-//     {
-//         printf("An error occurred while trying to create an ENet client host.\n");
-//         return 1;
-//     }
-
-//     connectToServer(client, &event);
-
-//     printf("Starting while loop:\n");
-//     int running = 1;
-//     while (running)
-//     {
-//         while (enet_host_service(client, &event, 10) > 0)
-//         {
-//             switch (event.type)
-//             {
-//             case ENET_EVENT_TYPE_RECEIVE:
-//                 printf("Received packet data\n");
-//                 enet_packet_destroy(event.packet);
-//                 break;
-//             case ENET_EVENT_TYPE_DISCONNECT:
-//                 printf("Disconnected.\n");
-//                 running = 0; // Break the loop and exit gracefully
-//                 event.peer->data = NULL;
-//                 break;
-//             default:
-//                 break;
-//             }
-//         }
-//     }
-
-//     enet_host_destroy(client);
-//     return 0;
-// }
+ENetHost *returnClientServer(){
+    return receivedServer;
+}

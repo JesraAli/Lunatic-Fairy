@@ -83,7 +83,6 @@ int main(int argc, char **argv)
 
     while (true)
     {
-
         if (returnPlayerLife() == 0)
         {
             addHighscore(returnPlayerScore(), returnHighscoreList());
@@ -123,7 +122,14 @@ int main(int argc, char **argv)
         if (returnMultiplayerStatus() == true)
         {
             // bulletPackets(returnServerVar());
-            playerPackets(returnServerVar());
+            if (returnServerVar() == NULL) //Check if its host or client accessing server variable
+            {
+                playerPackets(returnClientServer());
+            }
+            else
+            {
+                playerPackets(returnServerVar());
+            }
         }
 
         if (playerNullCheck())

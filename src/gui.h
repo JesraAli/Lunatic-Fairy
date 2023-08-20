@@ -5,6 +5,8 @@
 #include "highscoreInfo.h"
 #include <enet/enet.h>
 
+void signalSecondClientJoined(void);
+
 int load(void);
 void userInput(void);
 void initTitle(void);
@@ -72,7 +74,7 @@ int end(void);
 ENetPacket *bulletPackets(ENetPeer *server);
 void processBulletPacket(ENetPacket *packet);
 
-ENetPacket *playerPackets(ENetPeer *server);
+ENetPacket *playerPackets(ENetHost *server);
 void processPlayerPacket(ENetPacket *packet);
 
 void rendCopyPlayer2(void);

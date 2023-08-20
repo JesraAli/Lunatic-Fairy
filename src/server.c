@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "structs.h"
 
 // Different channels for packet passing
 #define BULLETANDSTATUS_CHANNEL 0
@@ -76,9 +77,13 @@ void runServer(int serverPort)
 
                 if (event.channelID == PLAYER_CHANNEL)
                 {
+
+                    /*This loop putting x and y into weird positions*/
                     printf("Server: Player Packet Request Recieved\n");
+                    ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
+
                     // Broadcast the received packet to other clients
-                    enet_host_broadcast(server, PLAYER_CHANNEL, event.packet);
+                    enet_host_broadcast(server, PLAYER_CHANNEL, broadcastPacket);
                     enet_packet_destroy(event.packet);
                 }
                 break;

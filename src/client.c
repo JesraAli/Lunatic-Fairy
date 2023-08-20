@@ -112,7 +112,7 @@ void runClient(int serverPort)
                 if (event.channelID == PLAYER_CHANNEL)
                 {
                     printf("Client: PLAYER Packet data recieved\n");
-                    // Process Player packet and update your local game state
+                    // Process Player packet and update local game state
                     processPlayerPacket(event.packet);
                 }
                 enet_packet_destroy(event.packet);
@@ -138,6 +138,8 @@ void sendUpdateToServerAndBroadcast(ENetPacket *packet)
 {
     if (peer != NULL)
     {
+        // Entity *receivedPlayer = (Entity *)packet->data;
+        // printf("Client;;::::! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
         // Create an update packet and send it to the server
         enet_peer_send(peer, PLAYER_CHANNEL, packet);
         // enet_packet_destroy(packet);

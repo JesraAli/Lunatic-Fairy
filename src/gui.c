@@ -1302,8 +1302,6 @@ ENetPacket *playerPackets()
     {
         ENetPacket *packet = enet_packet_create(player, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
         sendUpdateToServerAndBroadcast(packet);
-        // enet_host_broadcast(server, PLAYER_CHANNEL, packet);
-        // printf("Broadcasted Player Packet!\n");
     }
 }
 

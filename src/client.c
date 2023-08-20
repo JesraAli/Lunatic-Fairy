@@ -16,7 +16,9 @@
 #define STATUS_CHANNEL 2
 
 extern bool secondClientJoined;
-ENetHost *receivedServer;
+ENetPeer *peer;
+// ENetHost *receivedServer;
+ENetHost *client;
 
 void runClient(int serverPort)
 {
@@ -29,11 +31,11 @@ void runClient(int serverPort)
     atexit(enet_deinitialize);
     ENetEvent event;
 
-    ENetHost *client = enet_host_create(NULL /* create a client host */,
-                                        1 /* only allow 1 outgoing connection */,
-                                        2 /* allow up 2 channels to be used, 0 and 1 */,
-                                        0 /* assume any amount of incoming bandwidth */,
-                                        0 /* assume any amount of outgoing bandwidth */);
+    client = enet_host_create(NULL /* create a client host */,
+                              1 /* only allow 1 outgoing connection */,
+                              2 /* allow up 2 channels to be used, 0 and 1 */,
+                              0 /* assume any amount of incoming bandwidth */,
+                              0 /* assume any amount of outgoing bandwidth */);
 
     if (client == NULL)
     {
@@ -47,7 +49,8 @@ void runClient(int serverPort)
     address.port = serverPort;
 
     printf("Client: Connecting to server at  port %d...\n", address.port);
-    ENetPeer *peer = enet_host_connect(client, &address, 2, 0);
+    // ENetPeer *peer = enet_host_connect(client, &address, 2, 0);
+    peer = enet_host_connect(client, &address, 2, 0);
 
     if (peer == NULL)
     {
@@ -94,8 +97,8 @@ void runClient(int serverPort)
                     else if (event.packet->dataLength == sizeof(ENetHost *))
                     {
                         printf("Client: SERVER variable recieved\n");
-                        receivedServer = NULL;
-                        memcpy(&receivedServer, event.packet->data, sizeof(ENetHost *));
+                        // receivedServer = NULL;
+                        // memcpy(&receivedServer, event.packet->data, sizeof(ENetHost *));
                     }
                     else
                     {
@@ -127,6 +130,16 @@ void runClient(int serverPort)
     }
 }
 
-ENetHost *returnClientServer(){
-    return receivedServer;
+// ENetHost *returnClientServer(){
+//     return receivedServer;
+// }
+
+void sendUpdateToServerAndBroadcast(ENetPacket *packet)
+{
+    if (peer != NULL)
+    {
+        // Create an update packet and send it to the server
+        enet_peer_send(peer, PLAYER_CHANNEL, packet);
+        // enet_packet_destroy(packet);
+    }
 }

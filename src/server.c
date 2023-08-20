@@ -65,7 +65,7 @@ void runServer(int serverPort)
                     // secondClientJoined = true;
                     sendSecondClientStatus(true); // Notify clients that the second client has joined
                     ENetAddress serverAddress = server->address;
-                    sendServerPointer(event.peer, &serverAddress);
+                    // sendServerPointer(event.peer, &serverAddress);
                     // sendServerPointer(event.peer); // Send the server pointer to the second client
                 }
                 event.peer->data = (void *)"Client information";
@@ -73,8 +73,14 @@ void runServer(int serverPort)
             }
             case ENET_EVENT_TYPE_RECEIVE:
             {
-                printf("Server: recieved packet data");
-                enet_packet_destroy(event.packet);
+
+                if (event.channelID == PLAYER_CHANNEL)
+                {
+                    printf("Server: Player Packet Request Recieved\n");
+                    // Broadcast the received packet to other clients
+                    enet_host_broadcast(server, PLAYER_CHANNEL, event.packet);
+                    enet_packet_destroy(event.packet);
+                }
                 break;
             }
             case ENET_EVENT_TYPE_DISCONNECT:
@@ -104,10 +110,10 @@ void sendSecondClientStatus(bool status)
     enet_host_broadcast(server, BULLETANDSTATUS_CHANNEL, packet);
 }
 
-void sendServerPointer(ENetPeer *clientPeer, const ENetAddress *serverAddress)
-{
-    // Create  packet containing the server pointer
-    ENetPacket *packet = enet_packet_create(&server, sizeof(ENetHost *), ENET_PACKET_FLAG_RELIABLE);
+// void sendServerPointer(ENetPeer *clientPeer, const ENetAddress *serverAddress)
+// {
+//     // Create  packet containing the server pointer
+//     ENetPacket *packet = enet_packet_create(&server, sizeof(ENetHost *), ENET_PACKET_FLAG_RELIABLE);
 
-    enet_peer_send(clientPeer, BULLETANDSTATUS_CHANNEL, packet);
-}
+//     enet_peer_send(clientPeer, BULLETANDSTATUS_CHANNEL, packet);
+// }

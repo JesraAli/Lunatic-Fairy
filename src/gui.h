@@ -74,7 +74,7 @@ int end(void);
 ENetPacket *bulletPackets(ENetPeer *server);
 void processBulletPacket(ENetPacket *packet);
 
-ENetPacket *playerPackets(ENetHost *server);
+ENetPacket *playerPackets();
 void processPlayerPacket(ENetPacket *packet);
 
 void rendCopyPlayer2(void);

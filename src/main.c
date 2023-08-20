@@ -122,14 +122,15 @@ int main(int argc, char **argv)
         if (returnMultiplayerStatus() == true)
         {
             // bulletPackets(returnServerVar());
-            if (returnServerVar() == NULL) //Check if its host or client accessing server variable
-            {
-                playerPackets(returnClientServer());
-            }
-            else
-            {
-                playerPackets(returnServerVar());
-            }
+            // if (returnServerVar() == NULL) //Check if its host or client accessing server variable
+            // {
+            //     playerPackets(returnClientServer());
+            // }
+            // else
+            // {
+            //     playerPackets(returnServerVar());
+            // }
+            playerPackets();
         }
 
         if (playerNullCheck())
@@ -196,11 +197,10 @@ void multiplayerCheck()
             printf("Failed to create client thread.\n");
             return;
         }
+        loadingScreen();
     }
     else
     {
         printf("Multiplayer Mode: false :(\n");
     }
-
-    loadingScreen();
 }

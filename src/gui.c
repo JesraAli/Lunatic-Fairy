@@ -1,6 +1,7 @@
 #include "gui.h"
 #include <enet/enet.h>
 #include "server.h"
+#include "client.h"
 
 // Different channels for packet passing
 #define BULLETANDSTATUS_CHANNEL 0
@@ -1294,15 +1295,15 @@ void processBulletPacket(ENetPacket *packet)
 }
 
 /*Player Packet Creation (Sending local player variable)*/
-ENetPacket *playerPackets(ENetHost *server)
+ENetPacket *playerPackets()
 {
     // Only send a packet if the player has moved (check x and y velocities)
     if (player->x_vel != 0 || player->y_vel != 0)
     {
         ENetPacket *packet = enet_packet_create(player, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
-        printf("Just created Player packet\n");
-        enet_host_broadcast(server, PLAYER_CHANNEL, packet);
-        printf("Broadcasted Player Packet!\n");
+        sendUpdateToServerAndBroadcast(packet);
+        // enet_host_broadcast(server, PLAYER_CHANNEL, packet);
+        // printf("Broadcasted Player Packet!\n");
     }
 }
 

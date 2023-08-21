@@ -80,6 +80,7 @@ int main(int argc, char **argv)
     SDL_ShowCursor(0); // Hide cursor
 
     multiplayerCheck();
+    initPlayers();
 
     while (true)
     {
@@ -108,15 +109,15 @@ int main(int argc, char **argv)
         }
 
         manipulateDBullet();
-        manipulateFairy();
-        fireEnemyBulletCall();
-        spawnFairies('L');
-        spawnFairies('R');
+        // manipulateFairy();
+        // fireEnemyBulletCall();
+        // spawnFairies('L');
+        // spawnFairies('R');
 
         manipulateExplosion();
         manipulatePowerUp();
         playerCollidePowerUp();
-        playerCollideFairy();
+        // playerCollideFairy();
 
         // // Create & send packets for all entities
         if (returnMultiplayerStatus() == true)
@@ -155,8 +156,8 @@ int main(int argc, char **argv)
         drawDBullets();
 
         drawBullets();
-        drawEnemyBullets();
-        drawFairy();
+        // drawEnemyBullets();
+        // drawFairy();
         drawEnemyExplosion();
         drawPowerUp();
         drawStats(returnHighscoreList());

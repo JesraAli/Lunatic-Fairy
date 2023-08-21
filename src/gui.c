@@ -19,7 +19,7 @@ void signalSecondClientJoined()
 SDL_Window *win;
 SDL_Renderer *rend;
 SDL_Surface *surface;
-Entity *player;
+Entity *player, *opponentPlayer;
 Action action;
 Stage stage;
 Background *background, *title, *modeList, *modeEasy, *modeHard, *modeLunatic, *loading;
@@ -387,7 +387,7 @@ void initStage()
     stage.explosionTail = &stage.explosionHead;
     stage.powerUpTail = &stage.powerUpHead;
 
-    initPlayers();
+    // initPlayers();
 
     fairySpawnTimer = 0;
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
@@ -400,6 +400,7 @@ void resetStage()
     Entity *e;
 
     free(player); // Free player1
+    free(opponentPlayer);
 
     while (stage.bulletHead.next)
     {
@@ -476,7 +477,8 @@ void initPlayers()
     // else
     // {
     initPlayer();
-    players[0] = initPlayer2();
+    // players[0] = initPlayer2();
+    initPlayer2();
 
     // }
 }
@@ -486,7 +488,22 @@ void initPlayer()
     player = malloc(sizeof(Entity));
     memset(player, 0, sizeof(Entity)); // Set player variables to 0
 
-    player->tex = IMG_LoadTexture(rend, "img/sprite.png"); // Create texture for player
+    if (returnMultiplayerStatus() == true)
+    {
+        if (returnServerVar() == NULL)
+        {
+            player->tex = IMG_LoadTexture(rend, "img/touhouSprite.png");
+        }
+        else
+        {
+            player->tex = IMG_LoadTexture(rend, "img/sprite.png");
+        }
+    }
+    else
+    {
+        player->tex = IMG_LoadTexture(rend, "img/sprite.png");
+    }
+    // player->tex = IMG_LoadTexture(rend, "img/sprite.png"); // Create texture for player
 
     // Get & Scale dimensions of texture:
     SDL_QueryTexture(player->tex, NULL, NULL, &player->rect.w, &player->rect.h);
@@ -509,30 +526,36 @@ void initPlayer()
 /**Initialise Player2 Function*/
 Entity initPlayer2()
 {
-    Entity player2;
-    // player2 = malloc(sizeof(Entity));
-    memset(&player2, 0, sizeof(Entity)); // Set player variables to 0
 
-    player2.tex = IMG_LoadTexture(rend, "img/touhouSprite.png"); // Create texture for player
+    opponentPlayer = malloc(sizeof(Entity));
+    memset(opponentPlayer, 0, sizeof(Entity)); // Set player variables to 0
+
+    // If player2:
+    if (returnServerVar() == NULL)
+    {
+        opponentPlayer->tex = IMG_LoadTexture(rend, "img/sprite.png");
+    }
+    else // if player 1:
+    {
+        opponentPlayer->tex = IMG_LoadTexture(rend, "img/touhouSprite.png");
+    }
 
     // Get & Scale dimensions of texture:
-    SDL_QueryTexture(player->tex, NULL, NULL, &player2.rect.w, &player2.rect.h);
-    player2.rect.w += 35; // scales image up
-    player2.rect.h += 40;
+    SDL_QueryTexture(opponentPlayer->tex, NULL, NULL, &opponentPlayer->rect.w, &opponentPlayer->rect.h);
+    opponentPlayer->rect.w += 35; // scales image up
+    opponentPlayer->rect.h += 40;
 
     // Hitbox Scaling
-    player2.hitbox.w = player2.rect.w / 20;
-    player2.hitbox.h = player2.rect.h / 5;
+    opponentPlayer->hitbox.w = opponentPlayer->rect.w / 20;
+    opponentPlayer->hitbox.h = opponentPlayer->rect.h / 5;
 
     // Sprite in centre of screen at start
-    player2.x_pos = (WINDOW_WIDTH - player2.rect.w) / 2;
-    player2.y_pos = (WINDOW_HEIGHT - player2.rect.h) / 2;
+    opponentPlayer->x_pos = (WINDOW_WIDTH - opponentPlayer->rect.w) / 2;
+    opponentPlayer->y_pos = (WINDOW_HEIGHT - opponentPlayer->rect.h) / 2;
 
     // Initial sprite velocity 0 (because keyboard controls it)
-    player2.x_vel = 0;
-    player2.y_vel = 0;
-
-    return player2;
+    opponentPlayer->x_vel = 0;
+    opponentPlayer->y_vel = 0;
 }
 
 /**Check if player collide with fairy*/
@@ -1293,10 +1316,12 @@ void processBulletPacket(ENetPacket *packet)
 /*Player Packet Creation (Sending local player variable)*/
 ENetPacket *playerPackets()
 {
-    if(returnServerVar() == NULL){ // (aka if the client is NOT Running the server (aka player 2))
+    if (returnServerVar() == NULL)
+    { // (aka if the client is NOT Running the server (aka player 2))
         player->playerID = 2;
     }
-    else{
+    else
+    {
         player->playerID = 1; //((Means it must be the host calling the function, so playerID is 1))
     }
     // Only send a packet if the player has moved (check x and y velocities)
@@ -1313,21 +1338,56 @@ void processPlayerPacket(ENetPacket *packet)
     // Extract player data from the packet
     Entity *receivedPlayer = (Entity *)packet->data;
 
-    // Update the corresponding player entity in your local array
-    if (receivedPlayer->playerID == 1)
+    // if player 2:
+    if (returnServerVar() == NULL)
     {
-        // // Update local player data
-        printf("Received 1 Player! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+        // If 2, then its local so change nothing
+        if (receivedPlayer->playerID == 2)
+        {
+            // // Update local player data
+            printf("Player2: Received local player! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+        }
+        else if (receivedPlayer->playerID == 1)
+        {
+            // Update remote player data
+            // memcpy(&players[0], receivedPlayer, sizeof(Entity));
+            printf("Player2: Updating opponent\n");
+            // memcpy(&opponentPlayer, receivedPlayer, sizeof(Entity));
+            opponentPlayer->x_pos = receivedPlayer->x_pos;
+            opponentPlayer->y_pos = receivedPlayer->y_pos;
+            opponentPlayer->rect.x = opponentPlayer->x_pos;
+            opponentPlayer->rect.y = opponentPlayer->y_pos;
+
+            printf("Player2: Received 1 player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+        }
     }
-    else if (receivedPlayer->playerID == 2)
-    {
-        // Update remote player data
-        memcpy(&players[0], receivedPlayer, sizeof(Entity));
-        printf("Received 2 player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+    else
+    { // if player 1:
+
+        // if 1, then its local so change nothing
+        //  Update the corresponding player entity in your local array
+        if (receivedPlayer->playerID == 1)
+        {
+            // // Update local player data
+            printf("Player1: Received local player! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+        }
+        else if (receivedPlayer->playerID == 2)
+        {
+            // Update remote player data
+            // memcpy(&players[0], receivedPlayer, sizeof(Entity));
+            printf("Player1: Updating opponent:\n");
+            // memcpy(&opponentPlayer, receivedPlayer, sizeof(Entity));
+            opponentPlayer->x_pos = receivedPlayer->x_pos;
+            opponentPlayer->y_pos = receivedPlayer->y_pos;
+            opponentPlayer->rect.x = opponentPlayer->x_pos;
+            opponentPlayer->rect.y = opponentPlayer->y_pos;
+            printf("Player1: Received 2 player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+        }
     }
 }
 
 void rendCopyPlayer2()
 {
-    SDL_RenderCopy(rend, &players[0].tex, NULL, &players[0].rect);
+    // SDL_RenderCopy(rend, &players[0].tex, NULL, &players[0].rect);
+    SDL_RenderCopy(rend, opponentPlayer->tex, NULL, &opponentPlayer->rect);
 }

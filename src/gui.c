@@ -504,8 +504,6 @@ void initPlayer()
     // Initial sprite velocity 0 (because keyboard controls it)
     player->x_vel = 0;
     player->y_vel = 0;
-
-    player->playerID = 1; // 1 for local player, 2 for 2nd player
 }
 
 /**Initialise Player2 Function*/
@@ -533,8 +531,6 @@ Entity initPlayer2()
     // Initial sprite velocity 0 (because keyboard controls it)
     player2.x_vel = 0;
     player2.y_vel = 0;
-
-    player2.playerID = 2; // 0 for local player, 1 for 2nd player
 
     return player2;
 }
@@ -1297,6 +1293,12 @@ void processBulletPacket(ENetPacket *packet)
 /*Player Packet Creation (Sending local player variable)*/
 ENetPacket *playerPackets()
 {
+    if(returnServerVar() == NULL){ // (aka if the client is NOT Running the server (aka player 2))
+        player->playerID = 2;
+    }
+    else{
+        player->playerID = 1; //((Means it must be the host calling the function, so playerID is 1))
+    }
     // Only send a packet if the player has moved (check x and y velocities)
     if (player->x_vel != 0 || player->y_vel != 0)
     {

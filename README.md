@@ -14,19 +14,30 @@ The player has 3 lives, and must dodge the fairies bullets to prevent losing a l
 
 ## Building and Running
 
+### Linux:
 To compile:
 
-```sh
+<!-- ```sh
 gcc src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm
-```
-
+``` -->
+```sh
 gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
+```
 
 
 To run:
 
-```sh
+<!-- ```sh
 ./main
+``` -->
+
+```sh
+./main -server <serverAddress> -port <portNumber>
+```
+
+Example of running the program:
+```sh
+./main -server 192.124.1.332 -port 2000
 ```
 
 ## Controls:
@@ -34,3 +45,6 @@ To run:
 To control your character, use the ```WASD``` keys to move ```UP```, ```DOWN```, ```LEFT```, ```RIGHT``` respectively, or use the corresponding up/down/left/right keys.
 
 To fire a bullet, press ```Z```.
+
+## Multiplayer Mode:
+To activate multiplayer mode from the home screen, press ```M```.

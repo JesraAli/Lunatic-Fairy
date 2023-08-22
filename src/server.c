@@ -79,11 +79,21 @@ void runServer(int serverPort)
                 {
 
                     /*This loop putting x and y into weird positions*/
-                    printf("Server: Player Packet Request Recieved\n");
+                    // printf("Server: Player Packet Request Recieved\n");
                     ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
 
                     // Broadcast the received packet to other clients
                     enet_host_broadcast(server, PLAYER_CHANNEL, broadcastPacket);
+                    enet_packet_destroy(event.packet);
+                }
+
+                if (event.channelID == BULLETANDSTATUS_CHANNEL)
+                {
+                    // printf("Server: Bullet Packet Request Recieved\n");
+                    ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
+
+                    // Broadcast the received packet to other clients
+                    enet_host_broadcast(server, BULLETANDSTATUS_CHANNEL, broadcastPacket);
                     enet_packet_destroy(event.packet);
                 }
                 break;

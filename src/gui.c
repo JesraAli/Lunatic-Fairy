@@ -25,6 +25,7 @@ Stage stage;
 Background *background, *title, *modeList, *modeEasy, *modeHard, *modeLunatic, *loading;
 Mode *mode;
 
+SDL_Texture *bulletTexture;
 int playerLife, playerScore, bulletDiagonal;
 int fairySpawnTimer;
 double PUprobability;
@@ -381,6 +382,7 @@ void initStage()
     memset(&stage, 0, sizeof(Stage)); // Set stage variables to 0
     // stage.playerTail = &stage.playerHead;
     stage.bulletTail = &stage.bulletHead;
+    stage.opponentBulletTail = &stage.opponentBulletHead; // Initialise opponents bullet linekd list
     stage.DBulletTail = &stage.DBulletHead;
     stage.fairyTail = &stage.fairyHead;
     stage.enemyBulletTail = &stage.enemyBulletHead;
@@ -392,6 +394,8 @@ void initStage()
     fairySpawnTimer = 0;
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
     bulletDiagonal = 0;
+
+    bulletTexture = IMG_LoadTexture(rend, "img/bullet.png");
 }
 
 /**Reset Stage Function*/
@@ -406,6 +410,13 @@ void resetStage()
     {
         e = stage.bulletHead.next;
         stage.bulletHead.next = e->next;
+        free(e);
+    }
+
+    while (stage.opponentBulletHead.next) // free opponent bullet linked list
+    {
+        e = stage.opponentBulletHead.next;
+        stage.opponentBulletHead.next = e->next;
         free(e);
     }
 
@@ -655,6 +666,9 @@ void manipulateAllBullets()
     Entity *eB, *eBPrev;
     eBPrev = &stage.enemyBulletHead;
 
+    Entity *ob, *obprev;
+    obprev = &stage.opponentBulletHead;
+
     // Player Bullet Manipulation
     for (b = stage.bulletHead.next; b != NULL; b = b->next)
     {
@@ -675,6 +689,29 @@ void manipulateAllBullets()
             prev->next = b->next;
             free(b);
             b = prev;
+        }
+    }
+
+    // Opponent Bullet Manipulation
+    for (ob = stage.opponentBulletHead.next; ob != NULL; ob = ob->next)
+    {
+        ob->x_pos += ob->x_vel / 60;
+        ob->y_pos += ob->y_vel / 60;
+
+        // Set the positions in the struct
+        ob->rect.y = ob->y_pos;
+        ob->rect.x = ob->x_pos;
+
+        // If bullet hits enemy OR goes beyond the top of the screen OR BulletLife = 0
+        if (bulletHit(ob) || ob->y_pos < -10 || ob->life == 0)
+        {
+            if (ob == stage.opponentBulletTail)
+            {
+                stage.opponentBulletTail = obprev;
+            }
+            obprev->next = ob->next;
+            free(ob);
+            ob = obprev;
         }
     }
 
@@ -1198,12 +1235,20 @@ void collisionDetection()
         if (action.fire)
         {
             fireBullet();
+            if (returnMultiplayerStatus() == true)
+            {
+                bulletPackets(); // Create the opponent bullet packets when bullet created
+            }
         }
     }
     // fire player bullet
     if (action.fire && player->reload == 0)
     {
         fireBullet();
+        if (returnMultiplayerStatus() == true)
+        {
+            bulletPackets(); // Create the opponent bullet packets when bullet created
+        }
     }
 
     if (bulletDiagonal == -1)
@@ -1275,42 +1320,66 @@ int end()
 /*PACKETS:*/
 
 /*Bullet Packet Creation*/
-ENetPacket *bulletPackets(ENetPeer *server) // Loop through the linked list and create packets for each bullet
+ENetPacket *bulletPackets() // Loop through the linked list and create packets for each bullet
 {
     Entity *b;
 
     for (b = stage.bulletHead.next; b != NULL; b = b->next)
     {
+        // if (stage.bulletHead.next != NULL)
+        // {
+        //     b = stage.bulletHead.next;
+        if (returnServerVar() == NULL)
+        { // (aka if the client is NOT Running the server (aka player 2))
+            b->bulletID = 2;
+        }
+        else
+        {
+            b->bulletID = 1; //((Means it must be the host calling the function, so playerID is 1))
+        }
+
         ENetPacket *packet = enet_packet_create(b, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
-        // enet_peer_send(peer, BULLET_CHANNEL, packet); //Send packet to the host/server
-        enet_host_broadcast(server, BULLETANDSTATUS_CHANNEL, packet); // Send packet to ALL connected clients instead
+        sendUpdateToServerAndBroadcast(packet, BULLETANDSTATUS_CHANNEL);
     }
 }
 
 // Function to process received bullet packet
 void processBulletPacket(ENetPacket *packet)
 {
+
     // Extract bullet data from the packet
     Entity *receivedBullet = (Entity *)packet->data;
-
     // Copy the received bullet data into a new local bullet entity (in case the recieved bullet state gets modified at any point)
     Entity *localBullet = (Entity *)malloc(sizeof(Entity));
     memcpy(localBullet, receivedBullet, sizeof(Entity));
 
-    // Add the local bullet to your local bullet linked list
-    localBullet->next = NULL;
-    if (stage.bulletTail == NULL)
+    // if player 2:
+    if (returnServerVar() == NULL)
     {
-        stage.bulletHead.next = localBullet;
-        stage.bulletTail = localBullet;
+        if (receivedBullet->bulletID == 1)
+        {
+            // Add the local bullet to local bullet linked list
+            // localBullet->tex = IMG_LoadTexture(rend, "img/bullet.png");
+
+            stage.opponentBulletTail->next = localBullet;
+            stage.opponentBulletTail = localBullet;
+
+            // printf("PLAYER 2: Received bullet: x = %d, y = %d\n", localBullet->x_pos, localBullet->y_pos);
+        }
     }
     else
-    {
-        stage.bulletTail->next = localBullet;
-        stage.bulletTail = localBullet;
+    { // if player 1:
+        if (receivedBullet->bulletID == 2)
+        {
+            // localBullet->tex = IMG_LoadTexture(rend, "img/bullet.png");
+
+            stage.opponentBulletTail->next = localBullet;
+            stage.opponentBulletTail = localBullet;
+            // printf("PLAYER 1: Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
+        }
     }
 
-    printf("Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
+    // printf("Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
 }
 
 /*Player Packet Creation (Sending local player variable)*/
@@ -1328,7 +1397,7 @@ ENetPacket *playerPackets()
     if (player->x_vel != 0 || player->y_vel != 0)
     {
         ENetPacket *packet = enet_packet_create(player, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
-        sendUpdateToServerAndBroadcast(packet);
+        sendUpdateToServerAndBroadcast(packet, PLAYER_CHANNEL);
     }
 }
 
@@ -1341,53 +1410,44 @@ void processPlayerPacket(ENetPacket *packet)
     // if player 2:
     if (returnServerVar() == NULL)
     {
-        // If 2, then its local so change nothing
-        if (receivedPlayer->playerID == 2)
-        {
-            // // Update local player data
-            printf("Player2: Received local player! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
-        }
-        else if (receivedPlayer->playerID == 1)
+        if (receivedPlayer->playerID == 1)
         {
             // Update remote player data
-            // memcpy(&players[0], receivedPlayer, sizeof(Entity));
-            printf("Player2: Updating opponent\n");
-            // memcpy(&opponentPlayer, receivedPlayer, sizeof(Entity));
+            // printf("Player2: Updating opponent\n");
             opponentPlayer->x_pos = receivedPlayer->x_pos;
             opponentPlayer->y_pos = receivedPlayer->y_pos;
             opponentPlayer->rect.x = opponentPlayer->x_pos;
             opponentPlayer->rect.y = opponentPlayer->y_pos;
 
-            printf("Player2: Received 1 player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+            // printf("Player2: Received 1st player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
         }
     }
     else
     { // if player 1:
-
-        // if 1, then its local so change nothing
-        //  Update the corresponding player entity in your local array
-        if (receivedPlayer->playerID == 1)
-        {
-            // // Update local player data
-            printf("Player1: Received local player! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
-        }
-        else if (receivedPlayer->playerID == 2)
+        if (receivedPlayer->playerID == 2)
         {
             // Update remote player data
-            // memcpy(&players[0], receivedPlayer, sizeof(Entity));
-            printf("Player1: Updating opponent:\n");
+            // printf("Player1: Updating opponent:\n");
             // memcpy(&opponentPlayer, receivedPlayer, sizeof(Entity));
             opponentPlayer->x_pos = receivedPlayer->x_pos;
             opponentPlayer->y_pos = receivedPlayer->y_pos;
             opponentPlayer->rect.x = opponentPlayer->x_pos;
             opponentPlayer->rect.y = opponentPlayer->y_pos;
-            printf("Player1: Received 2 player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+            // printf("Player1: Received 2nd player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
         }
     }
 }
 
 void rendCopyPlayer2()
 {
-    // SDL_RenderCopy(rend, &players[0].tex, NULL, &players[0].rect);
     SDL_RenderCopy(rend, opponentPlayer->tex, NULL, &opponentPlayer->rect);
+}
+
+void drawOpponentBullets()
+{
+    for (Entity *b = stage.opponentBulletHead.next; b != NULL; b = b->next)
+    {
+        b->tex = bulletTexture;
+        SDL_RenderCopy(rend, b->tex, NULL, &b->rect);
+    }
 }

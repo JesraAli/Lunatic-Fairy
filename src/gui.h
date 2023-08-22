@@ -71,13 +71,14 @@ void drawText(int x, int y, int r, int g, int b, char *format, ...);
 
 int end(void);
 
-ENetPacket *bulletPackets(ENetPeer *server);
+ENetPacket *bulletPackets();
 void processBulletPacket(ENetPacket *packet);
-
 ENetPacket *playerPackets();
 void processPlayerPacket(ENetPacket *packet);
 
 void rendCopyPlayer2(void);
+void drawOpponentBullets(void);
+
 
 
 #endif

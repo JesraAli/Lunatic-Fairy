@@ -48,7 +48,7 @@ void runClient(int serverPort)
     enet_address_set_host(&address, "localhost");
     address.port = serverPort;
 
-    printf("Client: Connecting to server at  port %d...\n", address.port);
+    // printf("Client: Connecting to server at  port %d...\n", address.port);
     // ENetPeer *peer = enet_host_connect(client, &address, 2, 0);
     peer = enet_host_connect(client, &address, 2, 0);
 
@@ -62,7 +62,7 @@ void runClient(int serverPort)
     {
         if (event.type == ENET_EVENT_TYPE_CONNECT)
         {
-            printf("Client Connection succeeded.\n");
+            printf("Client Connection succeeded to port %d.\n", address.port);
             enet_host_flush(client); // Need to include this so in server.c it can print the client connected
         }
         else
@@ -91,18 +91,12 @@ void runClient(int serverPort)
                 {
                     if (event.packet->dataLength == sizeof(bool))
                     {
-                        printf("Client: STATUS Packet data recieved\n");
+                        // printf("Client: STATUS Packet data recieved\n");
                         signalSecondClientJoined(); // Signal the gui.c function
-                    }
-                    else if (event.packet->dataLength == sizeof(ENetHost *))
-                    {
-                        printf("Client: SERVER variable recieved\n");
-                        // receivedServer = NULL;
-                        // memcpy(&receivedServer, event.packet->data, sizeof(ENetHost *));
                     }
                     else
                     {
-                        printf("Client: BULLET Packet data recieved\n");
+                        // printf("Client: BULLET Packet data recieved\n");
                         // Process bullet packet and update local game state
                         processBulletPacket(event.packet);
                     }
@@ -111,7 +105,7 @@ void runClient(int serverPort)
                 // Handle received packets based on packet type
                 if (event.channelID == PLAYER_CHANNEL)
                 {
-                    printf("Client: PLAYER Packet data recieved\n");
+                    // printf("Client: PLAYER Packet data recieved\n");
                     // Process Player packet and update local game state
                     processPlayerPacket(event.packet);
                 }
@@ -134,14 +128,14 @@ void runClient(int serverPort)
 //     return receivedServer;
 // }
 
-void sendUpdateToServerAndBroadcast(ENetPacket *packet)
+void sendUpdateToServerAndBroadcast(ENetPacket *packet, int channel)
 {
     if (peer != NULL)
     {
         // Entity *receivedPlayer = (Entity *)packet->data;
         // printf("Client;;::::! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
         // Create an update packet and send it to the server
-        enet_peer_send(peer, PLAYER_CHANNEL, packet);
+        enet_peer_send(peer, channel, packet);
         // enet_packet_destroy(packet);
     }
 }

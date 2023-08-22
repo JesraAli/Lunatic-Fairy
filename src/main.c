@@ -122,7 +122,6 @@ int main(int argc, char **argv)
         // // Create & send packets for all entities
         if (returnMultiplayerStatus() == true)
         {
-            // bulletPackets(returnServerVar());
             // if (returnServerVar() == NULL) //Check if its host or client accessing server variable
             // {
             //     playerPackets(returnClientServer());
@@ -131,9 +130,10 @@ int main(int argc, char **argv)
             // {
             //     playerPackets(returnServerVar());
             // }
+            // bulletPackets();
+
             playerPackets();
         }
-
         if (playerNullCheck())
         {
             resetStage();
@@ -156,6 +156,8 @@ int main(int argc, char **argv)
         drawDBullets();
 
         drawBullets();
+        drawOpponentBullets();
+
         // drawEnemyBullets();
         // drawFairy();
         drawEnemyExplosion();
@@ -168,9 +170,9 @@ int main(int argc, char **argv)
     if (returnMultiplayerStatus() == true)
     {
         pthread_join(serverThread, NULL); // Join server thread
-        pthread_join(clientThread, NULL); // Join server thread
+        pthread_join(clientThread, NULL);
 
-        // enet_host_destroy(client);        // Cleanup
+        // enet_host_destroy(client); // Cleanup
         enet_deinitialize();
     }
     end();
@@ -184,7 +186,6 @@ void multiplayerCheck()
     {
         printf("Multiplayer Mode: true\n");
         // Create Server Thread
-        // pthread_t serverThread;
         if (pthread_create(&serverThread, NULL, serverThreadFunction, &serverPort) != 0)
         {
             printf("Failed to create server thread.\n");
@@ -192,7 +193,6 @@ void multiplayerCheck()
         }
 
         // Create Client Thread
-        // pthread_t clientThread;
         if (pthread_create(&clientThread, NULL, clientThreadFunction, &serverPort) != 0)
         {
             printf("Failed to create client thread.\n");

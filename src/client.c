@@ -122,9 +122,19 @@ void runClient(int serverPort)
                     }
                     else
                     {
-                        // printf("Client: PLAYER Packet data recieved\n");
-                        // Process Player packet and update local game state
-                        processPlayerPacket(event.packet);
+                        Entity *receivedPacket = (Entity *)event.packet->data;
+
+                        if (receivedPacket->fairyID == 1)
+                        {
+                            processFairyPacket(event.packet);
+                        }
+                        else
+                        {
+
+                            // printf("Client: PLAYER Packet data recieved\n");
+                            // Process Player packet and update local game state
+                            processPlayerPacket(event.packet);
+                        }
                     }
                 }
                 enet_packet_destroy(event.packet);

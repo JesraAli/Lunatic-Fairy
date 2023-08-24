@@ -74,17 +74,20 @@ int end(void);
 ENetPacket *bulletPackets(void);
 void processBulletPacket(ENetPacket *packet);
 
-ENetPacket *DBulletPackets(void); // Loop through the linked list and create packets for each bullet
+ENetPacket *DBulletPackets(void);
 void processDBulletPacket(ENetPacket *packet);
 
 ENetPacket *playerPackets();
 void processPlayerPacket(ENetPacket *packet);
 
+ENetPacket *fairyPackets(void);
+void processFairyPacket(ENetPacket *packet);
+
 void rendCopyPlayer2(void);
 void drawOpponentBullets(void);
 void drawOpponentDBullets(void);
 
-    void resetPlayer(void);
+void resetPlayer(void);
 
 void updateMode(ENetPacket *packet);
 

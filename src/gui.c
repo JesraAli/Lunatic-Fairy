@@ -28,6 +28,7 @@ Mode *mode;
 
 SDL_Texture *bulletTexture;
 SDL_Texture *DBulletTexture;
+SDL_Texture *fairyTexture;
 int playerLife, playerScore, bulletDiagonal;
 int fairySpawnTimer;
 double PUprobability;
@@ -485,6 +486,7 @@ void initStage()
 
     bulletTexture = IMG_LoadTexture(rend, "img/bullet.png");
     DBulletTexture = IMG_LoadTexture(rend, "img/bulletPU.png");
+    fairyTexture = IMG_LoadTexture(rend, "img/fairy.png");
 }
 
 /*Multiplayer: Reset only one player*/
@@ -1126,6 +1128,7 @@ void spawnFairies(char direction)
 
         stage.fairyTail->next = fairy;
         stage.fairyTail = fairy;
+        fairyPackets(); // Create Fairy Packet
 
         if (returnMode() == 1)
         {
@@ -1206,6 +1209,10 @@ void drawFairy()
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
+        if (returnServerVar() == NULL) // Set texture if its second player
+        {
+            f->tex = fairyTexture;
+        }
         // If its 0 and 0, it will appear in top left corner (perhaps make it so if x&y position is
         // 0 at beginning, make it to -1 and check for -1 OR have a visiblity flag and check if its visible)
         if (f->rect.x == 0 && f->rect.y == 0)
@@ -1495,8 +1502,6 @@ void processBulletPacket(ENetPacket *packet)
             // Add the local bullet to local bullet linked list
             stage.opponentBulletTail->next = localBullet;
             stage.opponentBulletTail = localBullet;
-
-            // printf("PLAYER 2: Received bullet: x = %d, y = %d\n", localBullet->x_pos, localBullet->y_pos);
         }
     }
     else
@@ -1505,22 +1510,17 @@ void processBulletPacket(ENetPacket *packet)
         {
             stage.opponentBulletTail->next = localBullet;
             stage.opponentBulletTail = localBullet;
-            // printf("PLAYER 1: Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
         }
     }
-
-    // printf("Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
 }
 
-/*Bullet Packet Creation*/
+/*Diagonal Bullet Packet Creation*/
 ENetPacket *DBulletPackets() // Loop through the linked list and create packets for each bullet
 {
     Entity *DB;
 
-    // printf("In DBULLET() function\n");
     for (DB = stage.DBulletHead.next; DB != NULL; DB = DB->next)
     {
-        // printf("in FOR LOOP (db function)\n");
         if (returnServerVar() == NULL)
         { // (aka if the client is NOT Running the server (aka player 2))
             DB->bulletID = 2;
@@ -1554,8 +1554,6 @@ void processDBulletPacket(ENetPacket *packet)
             // Add the local bullet to local bullet linked list
             stage.opponentDBulletTail->next = localDBullet;
             stage.opponentDBulletTail = localDBullet;
-
-            // printf("PLAYER 2: Received bullet: x = %d, y = %d\n", localBullet->x_pos, localBullet->y_pos);
         }
     }
     else
@@ -1564,11 +1562,8 @@ void processDBulletPacket(ENetPacket *packet)
         {
             stage.opponentDBulletTail->next = localDBullet;
             stage.opponentDBulletTail = localDBullet;
-            // printf("PLAYER 1: Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
         }
     }
-
-    // printf("Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
 }
 
 /*Player Packet Creation (Sending local player variable)*/
@@ -1601,28 +1596,49 @@ void processPlayerPacket(ENetPacket *packet)
     {
         if (receivedPlayer->playerID == 1)
         {
-            // Update remote player data
-            // printf("Player2: Updating opponent\n");
             opponentPlayer->x_pos = receivedPlayer->x_pos;
             opponentPlayer->y_pos = receivedPlayer->y_pos;
             opponentPlayer->rect.x = opponentPlayer->x_pos;
             opponentPlayer->rect.y = opponentPlayer->y_pos;
-
-            // printf("Player2: Received 1st player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
         }
     }
     else
     { // if player 1:
         if (receivedPlayer->playerID == 2)
         {
-            // Update remote player data
-            // printf("Player1: Updating opponent:\n");
-            // memcpy(&opponentPlayer, receivedPlayer, sizeof(Entity));
             opponentPlayer->x_pos = receivedPlayer->x_pos;
             opponentPlayer->y_pos = receivedPlayer->y_pos;
             opponentPlayer->rect.x = opponentPlayer->x_pos;
             opponentPlayer->rect.y = opponentPlayer->y_pos;
-            // printf("Player1: Received 2nd player...: x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
+        }
+    }
+}
+
+/*Bullet Packet Creation*/
+ENetPacket *fairyPackets() // Loop through the linked list and create packets for each bullet
+{
+    Entity *f;
+    f = stage.fairyTail; // Set it to only send the recent fairy
+    f->fairyID = 1;      //((Means it must be the host calling the function, so playerID is 1))
+
+    ENetPacket *packet = enet_packet_create(f, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
+    sendUpdateToServerAndBroadcast(packet, PLAYER_CHANNEL);
+}
+
+// Function to process received bullet packet
+void processFairyPacket(ENetPacket *packet)
+{
+    if (returnServerVar() == NULL)
+    {
+        Entity *receivedFairy = (Entity *)packet->data;
+        Entity *localFairy = (Entity *)malloc(sizeof(Entity));
+        memcpy(localFairy, receivedFairy, sizeof(Entity));
+
+        if (receivedFairy->fairyID == 1)
+        {
+            // Add the local fairy to local fairy linked list
+            stage.fairyTail->next = localFairy;
+            stage.fairyTail = localFairy;
         }
     }
 }

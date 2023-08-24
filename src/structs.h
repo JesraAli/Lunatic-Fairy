@@ -25,6 +25,7 @@ typedef struct Entity
     bool rightDir;
     int playerID;
     int bulletID;
+    int fairyID;
     int bulletType; //2 == diagonal
     SDL_Texture *tex;
     SDL_Rect rect;

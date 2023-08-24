@@ -123,8 +123,21 @@ int main(int argc, char **argv)
         manipulateFairy();
         // fireEnemyBulletCall();
 
-        spawnFairies('L');
-        spawnFairies('R');
+        // Fairies: Want host player to create all the fairies, and send them to second player.
+        // DONT want second player to create ANY fairies.
+        if (returnMultiplayerStatus() == true)
+        { // Check multiplayer and it is HOST calling this
+            if (returnServerVar() != NULL)
+            {
+                spawnFairies('L');
+                spawnFairies('R');
+            }
+        }
+        else
+        { // Single Player
+            spawnFairies('L');
+            spawnFairies('R');
+        }
 
         manipulateExplosion();
         manipulatePowerUp();

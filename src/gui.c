@@ -27,6 +27,7 @@ Background *background, *title, *modeList, *modeEasy, *modeHard, *modeLunatic, *
 Mode *mode;
 
 SDL_Texture *bulletTexture;
+SDL_Texture *DBulletTexture;
 int playerLife, playerScore, bulletDiagonal;
 int fairySpawnTimer;
 double PUprobability;
@@ -473,6 +474,7 @@ void initStage()
     stage.bulletTail = &stage.bulletHead;
     stage.opponentBulletTail = &stage.opponentBulletHead; // Initialise opponents bullet linked list
     stage.DBulletTail = &stage.DBulletHead;
+    stage.opponentDBulletTail = &stage.opponentDBulletHead;
     stage.fairyTail = &stage.fairyHead;
     stage.enemyBulletTail = &stage.enemyBulletHead;
     stage.explosionTail = &stage.explosionHead;
@@ -482,6 +484,7 @@ void initStage()
     bulletDiagonal = 0;
 
     bulletTexture = IMG_LoadTexture(rend, "img/bullet.png");
+    DBulletTexture = IMG_LoadTexture(rend, "img/bulletPU.png");
 }
 
 /*Multiplayer: Reset only one player*/
@@ -496,7 +499,6 @@ void resetStage()
 {
     Entity *e;
 
-    printf("reset Stage called\n");
     free(player); // Free player1
     free(opponentPlayer);
 
@@ -518,6 +520,13 @@ void resetStage()
     {
         e = stage.DBulletHead.next;
         stage.DBulletHead.next = e->next;
+        free(e);
+    }
+
+    while (stage.opponentDBulletHead.next) // free Dopponent D Bullet linked list
+    {
+        e = stage.opponentDBulletHead.next;
+        stage.opponentDBulletHead.next = e->next;
         free(e);
     }
 
@@ -849,6 +858,9 @@ void manipulateDBullet()
     Entity *DB, *DBprev;
     DBprev = &stage.DBulletHead;
 
+    Entity *oDB, *oDBprev;
+    oDBprev = &stage.opponentDBulletHead;
+
     // DIAGONAL Bullet Manipulation
     for (DB = stage.DBulletHead.next; DB != NULL; DB = DB->next)
     {
@@ -869,6 +881,28 @@ void manipulateDBullet()
             DBprev->next = DB->next;
             free(DB);
             DB = DBprev;
+        }
+    }
+
+    // Opponent DB Bullet Manipulation
+    for (oDB = stage.opponentDBulletHead.next; oDB != NULL; oDB = oDB->next)
+    {
+        oDB->x_pos += oDB->x_vel / 30;
+        oDB->y_pos += oDB->y_vel / 30;
+
+        // Set the positions in the struct
+        oDB->rect.y = oDB->y_pos;
+        oDB->rect.x = oDB->x_pos;
+
+        if (bulletHit(oDB) || oDB->y_pos < -10 || oDB->life == 0)
+        {
+            if (oDB == stage.opponentDBulletTail)
+            {
+                stage.opponentDBulletTail = oDBprev;
+            }
+            oDBprev->next = oDB->next;
+            free(oDB);
+            oDB = oDBprev;
         }
     }
 }
@@ -894,7 +928,8 @@ void drawDBullets()
 int bulletHit(Entity *b)
 {
     Entity *f;
-    PUprobability = 0.2; // Probability of a powerUp spawning
+    // PUprobability = 0.2; // Probability of a powerUp spawning
+    PUprobability = 1; // Probability of a powerUp spawning
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
@@ -1323,7 +1358,15 @@ void collisionDetection()
     if (bulletDiagonal != 0 && player->reload == 0)
     {
         fireDiagonalBullet(250, -SPEED - 500, 30);
+        if (returnMultiplayerStatus() == true)
+        {
+            DBulletPackets(); // Create the opponent bullet packets when bullet created
+        }
         fireDiagonalBullet(-260, -SPEED - 500, -5);
+        if (returnMultiplayerStatus() == true)
+        {
+            DBulletPackets(); // Create the opponent bullet packets when bullet created
+        }
 
         // Allow normal bullets to fire when Diagonal Bullets are firing
         if (action.fire)
@@ -1420,9 +1463,6 @@ ENetPacket *bulletPackets() // Loop through the linked list and create packets f
 
     for (b = stage.bulletHead.next; b != NULL; b = b->next)
     {
-        // if (stage.bulletHead.next != NULL)
-        // {
-        //     b = stage.bulletHead.next;
         if (returnServerVar() == NULL)
         { // (aka if the client is NOT Running the server (aka player 2))
             b->bulletID = 2;
@@ -1453,8 +1493,6 @@ void processBulletPacket(ENetPacket *packet)
         if (receivedBullet->bulletID == 1)
         {
             // Add the local bullet to local bullet linked list
-            // localBullet->tex = IMG_LoadTexture(rend, "img/bullet.png");
-
             stage.opponentBulletTail->next = localBullet;
             stage.opponentBulletTail = localBullet;
 
@@ -1465,10 +1503,67 @@ void processBulletPacket(ENetPacket *packet)
     { // if player 1:
         if (receivedBullet->bulletID == 2)
         {
-            // localBullet->tex = IMG_LoadTexture(rend, "img/bullet.png");
-
             stage.opponentBulletTail->next = localBullet;
             stage.opponentBulletTail = localBullet;
+            // printf("PLAYER 1: Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
+        }
+    }
+
+    // printf("Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
+}
+
+/*Bullet Packet Creation*/
+ENetPacket *DBulletPackets() // Loop through the linked list and create packets for each bullet
+{
+    Entity *DB;
+
+    // printf("In DBULLET() function\n");
+    for (DB = stage.DBulletHead.next; DB != NULL; DB = DB->next)
+    {
+        // printf("in FOR LOOP (db function)\n");
+        if (returnServerVar() == NULL)
+        { // (aka if the client is NOT Running the server (aka player 2))
+            DB->bulletID = 2;
+        }
+        else
+        {
+            DB->bulletID = 1; //((Means it must be the host calling the function, so playerID is 1))
+        }
+
+        DB->bulletType = 2;
+        ENetPacket *packet = enet_packet_create(DB, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
+        sendUpdateToServerAndBroadcast(packet, BULLETANDSTATUS_CHANNEL);
+    }
+}
+
+// Function to process received bullet packet
+void processDBulletPacket(ENetPacket *packet)
+{
+
+    // Extract bullet data from the packet
+    Entity *receivedDBullet = (Entity *)packet->data;
+    // Copy the received bullet data into a new local bullet entity (in case the recieved bullet state gets modified at any point)
+    Entity *localDBullet = (Entity *)malloc(sizeof(Entity));
+    memcpy(localDBullet, receivedDBullet, sizeof(Entity));
+
+    // if player 2:
+    if (returnServerVar() == NULL)
+    {
+        if (receivedDBullet->bulletID == 1)
+        {
+            // Add the local bullet to local bullet linked list
+            stage.opponentDBulletTail->next = localDBullet;
+            stage.opponentDBulletTail = localDBullet;
+
+            // printf("PLAYER 2: Received bullet: x = %d, y = %d\n", localBullet->x_pos, localBullet->y_pos);
+        }
+    }
+    else
+    { // if player 1:
+        if (receivedDBullet->bulletID == 2)
+        {
+            stage.opponentDBulletTail->next = localDBullet;
+            stage.opponentDBulletTail = localDBullet;
             // printf("PLAYER 1: Received bullet: x = %d, y = %d\n", receivedBullet->x_pos, receivedBullet->y_pos);
         }
     }
@@ -1543,5 +1638,14 @@ void drawOpponentBullets()
     {
         b->tex = bulletTexture;
         SDL_RenderCopy(rend, b->tex, NULL, &b->rect);
+    }
+}
+
+void drawOpponentDBullets()
+{
+    for (Entity *DB = stage.opponentDBulletHead.next; DB != NULL; DB = DB->next)
+    {
+        DB->tex = DBulletTexture;
+        SDL_RenderCopy(rend, DB->tex, NULL, &DB->rect);
     }
 }

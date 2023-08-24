@@ -121,7 +121,7 @@ int main(int argc, char **argv)
         manipulateDBullet();
 
         manipulateFairy();
-        fireEnemyBulletCall();
+        // fireEnemyBulletCall();
 
         spawnFairies('L');
         spawnFairies('R');
@@ -167,10 +167,11 @@ int main(int argc, char **argv)
         // Drawing:
 
         drawDBullets();
+        drawOpponentDBullets();
         drawBullets();
         drawOpponentBullets();
 
-        drawEnemyBullets();
+        // drawEnemyBullets();
         drawFairy();
         drawEnemyExplosion();
         drawPowerUp();

@@ -25,6 +25,7 @@ typedef struct Entity
     bool rightDir;
     int playerID;
     int bulletID;
+    int bulletType; //2 == diagonal
     SDL_Texture *tex;
     SDL_Rect rect;
     SDL_Rect hitbox;
@@ -37,6 +38,7 @@ typedef struct
     Entity bulletHead, *bulletTail;
     Entity opponentBulletHead, *opponentBulletTail;
     Entity DBulletHead, *DBulletTail;
+    Entity opponentDBulletHead, *opponentDBulletTail;
     Entity fairyHead, *fairyTail;
     Entity enemyBulletHead, *enemyBulletTail;
     Entity explosionHead, *explosionTail;

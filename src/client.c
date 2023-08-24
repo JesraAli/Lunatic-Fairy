@@ -94,11 +94,22 @@ void runClient(int serverPort)
                         // printf("Client: STATUS Packet data recieved\n");
                         signalSecondClientJoined(); // Signal the gui.c function
                     }
-                    else
+                    else if (event.packet->dataLength == sizeof(Entity))
                     {
                         // printf("Client: BULLET Packet data recieved\n");
                         // Process bullet packet and update local game state
-                        processBulletPacket(event.packet);
+
+                        Entity *receivedBullet = (Entity *)event.packet->data;
+
+                        // Check bullet type and broadcast accordingly
+                        if (receivedBullet->bulletType == 2) // Diagonal Bullet
+                        {
+                            processDBulletPacket(event.packet);
+                        }
+                        else
+                        {
+                            processBulletPacket(event.packet);
+                        }
                     }
                 }
 
@@ -107,10 +118,7 @@ void runClient(int serverPort)
                 {
                     if (event.packet->dataLength == sizeof(Mode))
                     {
-                        // printf("Client: OMG RECIEVED MODE PACKET!!!!!!!!!!!!!!!!!!!!!!\n");
                         updateMode(event.packet);
-                        // memcpy(&receivedMode, event.packet->data, sizeof(Mode));
-                        // modeReceived = true;
                     }
                     else
                     {

@@ -106,10 +106,12 @@ void addHighscore(int score, HighscoreList *highscoreList)
 /*Draw the current Score and current highest Highscore at top of screen*/
 void drawStats(HighscoreList *highscoreList)
 {
+
     int playerScore = returnPlayerScore();
+
     drawText(10, 10, 255, 255, 255, "SCORE: %03d", playerScore);
 
-    if (playerScore < highscoreList->highscore[0].score)
+        if (playerScore < highscoreList->highscore[0].score)
     {
         drawText(530, 10, 255, 255, 255, "HIGHSCORE: %03d", highscoreList->highscore[0].score);
     }

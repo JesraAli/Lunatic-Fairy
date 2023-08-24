@@ -79,6 +79,12 @@ void processPlayerPacket(ENetPacket *packet);
 void rendCopyPlayer2(void);
 void drawOpponentBullets(void);
 
+void resetPlayer(void);
+
+void updateMode(ENetPacket *packet);
+
+
+
 
 
 #endif

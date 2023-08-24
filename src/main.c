@@ -78,8 +78,6 @@ int main(int argc, char **argv)
 
     titleLoop();
     SDL_ShowCursor(0); // Hide cursor
-
-    multiplayerCheck();
     initPlayers();
 
     while (true)
@@ -94,51 +92,65 @@ int main(int argc, char **argv)
         }
 
         prepareScene(); // Prepare Scene (Background & Clear)
+
         userInput();
+
         rendCopyBackground();
 
         // Collision detected with bounds (detect if sprite is going out of  window)
         collisionDetection();
 
         manipulateAllBullets();
+
         // Check if player is NULL, then repeat the while loop from beginning (avoids repetition of playerCollide() call)
         if (playerNullCheck())
         {
-            resetStage();
+            if (returnMultiplayerStatus() == true)
+            {
+                resetPlayer();
+                initPlayers();
+            }
+            else
+            {
+                resetStage();
+                initPlayers();
+            }
             continue;
         }
 
         manipulateDBullet();
-        // manipulateFairy();
-        // fireEnemyBulletCall();
-        // spawnFairies('L');
-        // spawnFairies('R');
+
+        manipulateFairy();
+        fireEnemyBulletCall();
+
+        spawnFairies('L');
+        spawnFairies('R');
 
         manipulateExplosion();
         manipulatePowerUp();
         playerCollidePowerUp();
-        // playerCollideFairy();
+        playerCollideFairy();
 
+        if (playerNullCheck())
+        {
+            if (returnMultiplayerStatus() == true)
+            {
+                resetPlayer();
+                initPlayers();
+            }
+            else
+            {
+                resetStage();
+                initPlayers();
+            }
+            continue;
+        }
         // // Create & send packets for all entities
         if (returnMultiplayerStatus() == true)
         {
-            // if (returnServerVar() == NULL) //Check if its host or client accessing server variable
-            // {
-            //     playerPackets(returnClientServer());
-            // }
-            // else
-            // {
-            //     playerPackets(returnServerVar());
-            // }
-            // bulletPackets();
-
             playerPackets();
         }
-        if (playerNullCheck())
-        {
-            resetStage();
-            continue;
-        }
+
         // Present Scene: draw the image to the window
         // if (player->rect.x == 0 && player->rect.y == 0) // check if its 0 (in top left corner) //NEED TO CHANGE AT LATER DATE
         // {
@@ -153,13 +165,13 @@ int main(int argc, char **argv)
         }
 
         // Drawing:
-        drawDBullets();
 
+        drawDBullets();
         drawBullets();
         drawOpponentBullets();
 
-        // drawEnemyBullets();
-        // drawFairy();
+        drawEnemyBullets();
+        drawFairy();
         drawEnemyExplosion();
         drawPowerUp();
         drawStats(returnHighscoreList());
@@ -171,8 +183,6 @@ int main(int argc, char **argv)
     {
         pthread_join(serverThread, NULL); // Join server thread
         pthread_join(clientThread, NULL);
-
-        // enet_host_destroy(client); // Cleanup
         enet_deinitialize();
     }
     end();
@@ -198,10 +208,11 @@ void multiplayerCheck()
             printf("Failed to create client thread.\n");
             return;
         }
-        loadingScreen();
+
+        SDL_Delay(10); // Delay so the server and client can initialise
     }
     else
     {
-        printf("Multiplayer Mode: false :(\n");
+        printf("Multiplayer Mode: false\n");
     }
 }

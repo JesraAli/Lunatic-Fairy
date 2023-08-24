@@ -105,9 +105,19 @@ void runClient(int serverPort)
                 // Handle received packets based on packet type
                 if (event.channelID == PLAYER_CHANNEL)
                 {
-                    // printf("Client: PLAYER Packet data recieved\n");
-                    // Process Player packet and update local game state
-                    processPlayerPacket(event.packet);
+                    if (event.packet->dataLength == sizeof(Mode))
+                    {
+                        // printf("Client: OMG RECIEVED MODE PACKET!!!!!!!!!!!!!!!!!!!!!!\n");
+                        updateMode(event.packet);
+                        // memcpy(&receivedMode, event.packet->data, sizeof(Mode));
+                        // modeReceived = true;
+                    }
+                    else
+                    {
+                        // printf("Client: PLAYER Packet data recieved\n");
+                        // Process Player packet and update local game state
+                        processPlayerPacket(event.packet);
+                    }
                 }
                 enet_packet_destroy(event.packet);
                 break;
@@ -132,10 +142,7 @@ void sendUpdateToServerAndBroadcast(ENetPacket *packet, int channel)
 {
     if (peer != NULL)
     {
-        // Entity *receivedPlayer = (Entity *)packet->data;
-        // printf("Client;;::::! x = %d, y = %d\n\n", receivedPlayer->x_pos, receivedPlayer->y_pos);
         // Create an update packet and send it to the server
         enet_peer_send(peer, channel, packet);
-        // enet_packet_destroy(packet);
     }
 }

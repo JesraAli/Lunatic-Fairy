@@ -78,12 +78,23 @@ void runServer(int serverPort)
                 if (event.channelID == PLAYER_CHANNEL)
                 {
 
-                    /*This loop putting x and y into weird positions*/
-                    // printf("Server: Player Packet Request Recieved\n");
-                    ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
+                    if (event.packet->dataLength == sizeof(Mode)) // is mode packet
+                    {
+                        // printf("Server: recieved mode packet\n");
+                        ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
 
-                    // Broadcast the received packet to other clients
-                    enet_host_broadcast(server, PLAYER_CHANNEL, broadcastPacket);
+                        // Broadcast the received packet to other clients
+                        enet_host_broadcast(server, PLAYER_CHANNEL, broadcastPacket);
+                    }
+                    else // is player packet
+                    {
+                        /*This loop putting x and y into weird positions*/
+                        // printf("Server: Player Packet Request Recieved\n");
+                        ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
+
+                        // Broadcast the received packet to other clients
+                        enet_host_broadcast(server, PLAYER_CHANNEL, broadcastPacket);
+                    }
                     enet_packet_destroy(event.packet);
                 }
 

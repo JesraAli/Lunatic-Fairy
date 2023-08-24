@@ -2,6 +2,7 @@
 #include <enet/enet.h>
 #include "server.h"
 #include "client.h"
+#include "main.h"
 
 // Different channels for packet passing
 #define BULLETANDSTATUS_CHANNEL 0
@@ -31,6 +32,7 @@ int fairySpawnTimer;
 double PUprobability;
 bool CTRL_PRESS;
 bool multiplayer;
+bool modeIsSet;
 Entity players[2]; // 2 == max amount of players
 
 /*Load Initialisations Function*/
@@ -160,6 +162,7 @@ void userInput()
         // Update positions (divide by 60 as only calculating 1/60th of a second)
         player->x_pos += player->x_vel / 60;
         player->y_pos += player->y_vel / 60;
+        // printf("Player->y_pos: %d\n",player->y_pos);
     }
 }
 
@@ -175,20 +178,20 @@ void loadingScreen()
     SDL_RenderCopy(rend, loading->tex, NULL, &loading->rect);
     SDL_RenderPresent(rend);
 
-    while (secondClientJoined != true)
-    {
-        SDL_Event event;
-        // Handle SDL events
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-            {
-                end();
-            }
-        }
-        // Delay for a short period before checking again
-        SDL_Delay(100); // Delay for 100 milliseconds
-    }
+    // while (secondClientJoined != true)
+    // {
+    //     SDL_Event event;
+    //     // Handle SDL events
+    //     while (SDL_PollEvent(&event))
+    //     {
+    //         if (event.type == SDL_QUIT)
+    //         {
+    //             end();
+    //         }
+    //     }
+    //     // Delay for a short period before checking again
+    //     SDL_Delay(100); // Delay for 100 milliseconds
+    // }
 }
 
 void titleLoop()
@@ -200,6 +203,8 @@ void titleLoop()
 
     playerLife = 3;
     playerScore = 0;
+
+    modeIsSet = false;
 
     while (SDL_WaitEvent(&event))
     {
@@ -219,8 +224,45 @@ void titleLoop()
         if (event.key.keysym.scancode == SDL_SCANCODE_M)
         { // Go to screen with list of difficulties
             multiplayer = true;
-            initModes();
-            presentModes();
+            multiplayerCheck();
+
+            if (returnServerVar() != NULL) // AKA host is running  for 1st time
+            {
+                // printf("HOST HOST HOST\n");
+                initModes();
+                presentModes();
+
+                // while(1){
+
+                // }
+                while (secondClientJoined != true)
+                {
+                    SDL_Event event;
+                    // Handle SDL events
+                    while (SDL_PollEvent(&event))
+                    {
+                        if (event.type == SDL_QUIT)
+                        {
+                            end();
+                        }
+                    }
+                    // Delay for a short period before checking again
+                    SDL_Delay(100); // Delay for 100 milliseconds
+                }
+            }
+            else
+            {
+                // RETRIEVE mode->? from host, send to client, update mode->? for client.
+                // printf("SEcCOND SECOND SECOND PLAYER\n");
+                loading = initSeperateBackground("img/loading.png");
+                SDL_RenderCopy(rend, loading->tex, NULL, &loading->rect);
+                SDL_RenderPresent(rend);
+
+                while (modeIsSet != true)
+                {
+                    loadingScreen();
+                }
+            }
             break;
         }
     }
@@ -337,7 +379,6 @@ void presentModes()
             {
                 mode->easy = true;
                 background = initSeperateBackground("img/easyB.png");
-
                 break;
             }
 
@@ -358,6 +399,55 @@ void presentModes()
             }
         }
     }
+
+    if (multiplayer == true)
+    {
+        // CHECK IF SECOND CLIENT HAS JOINED, WHEN THEY HAVE, CREATE THE PACKETS!!
+        loadingScreen();
+        while (secondClientJoined != true)
+        {
+            SDL_Event event;
+            // Handle SDL events
+            while (SDL_PollEvent(&event))
+            {
+                if (event.type == SDL_QUIT)
+                {
+                    end();
+                }
+            }
+            // Delay for a short period before checking again
+            SDL_Delay(100); // Delay for 100 milliseconds
+        }
+        // Send the packet of the mode to second usersendUpdateToServerAndBroadcast
+        ENetPacket *modePacket = enet_packet_create(mode, sizeof(Mode), ENET_PACKET_FLAG_RELIABLE);
+        sendUpdateToServerAndBroadcast(modePacket, PLAYER_CHANNEL);
+    }
+}
+
+void updateMode(ENetPacket *packet)
+{
+    if (returnServerVar() == NULL)
+    {
+        initModes();
+
+        Mode *receivedMode = (Mode *)packet->data;
+        if (receivedMode->easy == true)
+        {
+            mode->easy = true;
+            background = initSeperateBackground("img/easyB.png");
+        }
+        else if (receivedMode->hard == true)
+        {
+            mode->hard = true;
+            background = initSeperateBackground("img/hardB.png");
+        }
+        else if (receivedMode->lunatic == true)
+        {
+            mode->lunatic = true;
+            background = initSeperateBackground("img/lunaticB.png");
+        }
+    }
+    modeIsSet = true;
 }
 
 int returnMode() // 1: Easy, 2: Hard, 3: Lunatic
@@ -380,17 +470,13 @@ int returnMode() // 1: Easy, 2: Hard, 3: Lunatic
 void initStage()
 {
     memset(&stage, 0, sizeof(Stage)); // Set stage variables to 0
-    // stage.playerTail = &stage.playerHead;
     stage.bulletTail = &stage.bulletHead;
-    stage.opponentBulletTail = &stage.opponentBulletHead; // Initialise opponents bullet linekd list
+    stage.opponentBulletTail = &stage.opponentBulletHead; // Initialise opponents bullet linked list
     stage.DBulletTail = &stage.DBulletHead;
     stage.fairyTail = &stage.fairyHead;
     stage.enemyBulletTail = &stage.enemyBulletHead;
     stage.explosionTail = &stage.explosionHead;
     stage.powerUpTail = &stage.powerUpHead;
-
-    // initPlayers();
-
     fairySpawnTimer = 0;
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
     bulletDiagonal = 0;
@@ -398,11 +484,19 @@ void initStage()
     bulletTexture = IMG_LoadTexture(rend, "img/bullet.png");
 }
 
+/*Multiplayer: Reset only one player*/
+void resetPlayer()
+{
+    free(player);
+    initPlayer;
+}
+
 /**Reset Stage Function*/
 void resetStage()
 {
     Entity *e;
 
+    printf("reset Stage called\n");
     free(player); // Free player1
     free(opponentPlayer);
 
@@ -481,18 +575,10 @@ void restartGame()
 
 void initPlayers()
 {
-    // if (singlePlayer)
-    // {
-    //     initPlayer();
-    // }
-    // else
-    // {
     initPlayer();
-    // players[0] = initPlayer2();
     initPlayer2();
-
-    // }
 }
+
 /**Initialise Player Function*/
 void initPlayer()
 {
@@ -527,7 +613,11 @@ void initPlayer()
 
     // Sprite in centre of screen at start
     player->x_pos = (WINDOW_WIDTH - player->rect.w) / 2;
-    player->y_pos = (WINDOW_HEIGHT - player->rect.h) / 2;
+    // player->y_pos = (WINDOW_HEIGHT - player->rect.h) / 2;
+    player->y_pos = 400;
+
+    player->rect.x = player->x_pos;
+    player->rect.y = player->y_pos;
 
     // Initial sprite velocity 0 (because keyboard controls it)
     player->x_vel = 0;
@@ -562,7 +652,11 @@ Entity initPlayer2()
 
     // Sprite in centre of screen at start
     opponentPlayer->x_pos = (WINDOW_WIDTH - opponentPlayer->rect.w) / 2;
-    opponentPlayer->y_pos = (WINDOW_HEIGHT - opponentPlayer->rect.h) / 2;
+    // opponentPlayer->y_pos = (WINDOW_HEIGHT - opponentPlayer->rect.h) / 2;
+    opponentPlayer->y_pos = 400;
+
+    opponentPlayer->rect.x = opponentPlayer->x_pos;
+    opponentPlayer->rect.y = opponentPlayer->y_pos;
 
     // Initial sprite velocity 0 (because keyboard controls it)
     opponentPlayer->x_vel = 0;
@@ -588,7 +682,7 @@ int playerCollideFairy()
     return false;
 }
 
-/**Check if player collide with bullet*/
+/**Check if player collide with powerUp*/
 int playerCollidePowerUp()
 {
     Entity *p;

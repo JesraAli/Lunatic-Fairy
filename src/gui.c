@@ -1454,7 +1454,6 @@ void drawText(int x, int y, int r, int g, int b, char *format, ...)
 int end()
 {
     // Clean up all initialised subsystems
-    SDL_DestroyTexture(player->tex);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);
     SDL_Quit();

@@ -7,11 +7,16 @@
 #include <pthread.h>
 #include "server.h" // Include the modified header
 
+#define PLAYER_CHANNEL 1
+
 void multiplayerCheck();
 
 pthread_t serverThread;
 pthread_t clientThread;
 int serverPort;
+bool secondPlayerDead;
+bool hostPlayerDead;
+bool noLivesFlagCalled;
 
 // Define the structure to pass arguments to the server thread
 struct ServerThreadArgs
@@ -71,6 +76,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    noLivesFlagCalled = false;
+
     load();
     initStage();
     initHighScoreTable();
@@ -82,17 +89,45 @@ int main(int argc, char **argv)
 
     while (true)
     {
-        updateInvincible(); //Update player invincibility timer if player is invincible
+        updateInvincible(); // Update player invincibility timer if player is invincible
 
-        if (returnPlayerLife() == 0)
+        if (returnMultiplayerStatus() == true)
         {
-            addHighscore(returnPlayerScore(), returnHighscoreList());
-            drawHighscores(returnHighscoreList());
-            presentScene();
-            restartGame(); // Restart the game
+
+            if (returnPlayerLife() == 0 && noLivesFlagCalled == false)
+            {
+
+                playerNoLivesFunction();
+            }
+
+            if (secondPlayerDead == true && hostPlayerDead == true)
+            {
+                addHighscore(returnPlayerScore(), returnHighscoreList());
+                drawHighscores(returnHighscoreList());
+                presentScene();
+
+                // Reset variables
+                secondPlayerDead = false;
+                hostPlayerDead = false;
+                noLivesFlagCalled = true;
+                resetStage();
+                restartGame(); // Restart the game
+                initPlayers();
+            }
+        }
+        else
+        {
+            if (returnPlayerLife() == 0)
+            {
+                addHighscore(returnPlayerScore(), returnHighscoreList());
+                drawHighscores(returnHighscoreList());
+                presentScene();
+                restartGame(); // Restart the game
+                initPlayers();
+            }
         }
 
-        prepareScene(); // Prepare Scene (Background & Clear)
+        // prepareScene(); // Prepare Scene (Background & Clear)
 
         userInput();
 
@@ -109,7 +144,15 @@ int main(int argc, char **argv)
             if (returnMultiplayerStatus() == true)
             {
                 resetPlayer();
-                initPlayers();
+                //Only re-initialise one player if the other player is dead
+                if (hostPlayerDead == true || secondPlayerDead == true)
+                {
+                    initPlayer();
+                }
+                else
+                {
+                    initPlayers();
+                }
                 setInvincible();
             }
             else
@@ -152,7 +195,14 @@ int main(int argc, char **argv)
             if (returnMultiplayerStatus() == true)
             {
                 resetPlayer();
-                initPlayers();
+                if (hostPlayerDead == true || secondPlayerDead == true)
+                {
+                    initPlayer();
+                }
+                else
+                {
+                    initPlayers();
+                }
                 setInvincible();
             }
             else
@@ -183,7 +233,6 @@ int main(int argc, char **argv)
         }
 
         // Drawing:
-
         drawDBullets();
         drawOpponentDBullets();
         drawBullets();
@@ -193,7 +242,6 @@ int main(int argc, char **argv)
         drawFairy();
         drawEnemyExplosion();
         drawPowerUp();
-        // drawOpponentPowerUp();
         drawStats(returnHighscoreList());
         presentScene();
         SDL_Delay(1000 / 60); // Wait 1/60th of a second
@@ -235,4 +283,48 @@ void multiplayerCheck()
     {
         printf("Multiplayer Mode: false\n");
     }
+}
+
+void processPlayerNoLives(ENetPacket *packet)
+{
+    int *receivedValue = (int *)packet->data;
+
+    // 2 = second player died
+    // 1 = host died
+    if (*receivedValue == 2)
+    {
+        secondPlayerDead = true;
+        if (returnServerVar() != NULL)
+        {
+            freeOpponentPlayer();
+        }
+    }
+    else if (*receivedValue == 1)
+    {
+        hostPlayerDead = true;
+
+        if (returnServerVar() == NULL)
+        {                         // Second player calling code
+            freeOpponentPlayer(); // Free opponent on second players screen
+        }
+    }
+}
+
+void playerNoLivesFunction()
+{
+
+    int playerNoLives = 0; // 1 is host, 2 is second player
+
+    if (returnServerVar() == NULL)
+    {
+        playerNoLives = 2; // 2nd player
+    }
+    else
+    {
+        playerNoLives = 1; // host
+    }
+    ENetPacket *playerNoLivesPacket = enet_packet_create(&playerNoLives, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
+    sendUpdateToServerAndBroadcast(playerNoLivesPacket, PLAYER_CHANNEL);
+    noLivesFlagCalled = true;
+    freeCurrentPlayer();
 }

@@ -247,6 +247,7 @@ void titleLoop()
             // Single Player
             if (event.motion.x >= 157 && event.motion.x <= 367 && event.motion.y >= 421 && event.motion.y <= 471) // check if it is in the desired area
             {
+                multiplayer = false;
                 initModes();
                 presentModes();
                 break;
@@ -668,7 +669,10 @@ void restartGame()
 
         if (restartEvent.key.keysym.scancode == SDL_SCANCODE_ESCAPE) // Go to title with ESCAPE key
         {
+            printf("restarted game and preparing scene\n");
+
             prepareScene();
+
             // memset(&action, 0, sizeof(Action)); // Set action variables to 0
             titleLoop();
             break;
@@ -1900,4 +1904,18 @@ void updateInvincible()
         player->invincible = false;
         SDL_SetTextureColorMod(player->tex, 255, 255, 255);
     }
+}
+
+void freeCurrentPlayer()
+{
+    free(player);
+    player = malloc(sizeof(Entity));
+    memset(player, 0, sizeof(Entity)); // Set player variables to 0
+}
+
+void freeOpponentPlayer()
+{
+    free(opponentPlayer);
+    opponentPlayer = malloc(sizeof(Entity));
+    memset(opponentPlayer, 0, sizeof(Entity)); // Set player variables to 0
 }

@@ -120,6 +120,10 @@ void runClient(int serverPort)
                     {
                         updateMode(event.packet);
                     }
+                    else if (event.packet->dataLength == sizeof(int))
+                    { // If player ran out of lives
+                        processPlayerNoLives(event.packet);
+                    }
                     else
                     {
                         Entity *receivedPacket = (Entity *)event.packet->data;

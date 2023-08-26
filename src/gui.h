@@ -98,5 +98,7 @@ void resetPlayer(void);
 void updateMode(ENetPacket *packet);
 
 void setInvincible(void);
+void freeCurrentPlayer(void);
+void freeOpponentPlayer(void);
 
 #endif

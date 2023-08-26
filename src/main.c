@@ -88,7 +88,6 @@ int main(int argc, char **argv)
             drawHighscores(returnHighscoreList());
             presentScene();
             restartGame(); // Restart the game
-            multiplayerCheck();
         }
 
         prepareScene(); // Prepare Scene (Background & Clear)
@@ -188,6 +187,7 @@ int main(int argc, char **argv)
         drawFairy();
         drawEnemyExplosion();
         drawPowerUp();
+        // drawOpponentPowerUp();
         drawStats(returnHighscoreList());
         presentScene();
         SDL_Delay(1000 / 60); // Wait 1/60th of a second

@@ -26,7 +26,8 @@ typedef struct Entity
     int playerID;
     int bulletID;
     int fairyID;
-    int bulletType; //2 == diagonal
+    int powerupID;
+    int bulletType; // 2 == diagonal
     SDL_Texture *tex;
     SDL_Rect rect;
     SDL_Rect hitbox;
@@ -44,6 +45,8 @@ typedef struct
     Entity enemyBulletHead, *enemyBulletTail;
     Entity explosionHead, *explosionTail;
     Entity powerUpHead, *powerUpTail;
+    Entity opponentPowerUpHead, *opponentPowerUpTail;
+
 } Stage;
 
 typedef struct

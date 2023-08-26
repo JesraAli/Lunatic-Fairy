@@ -124,9 +124,13 @@ void runClient(int serverPort)
                     {
                         Entity *receivedPacket = (Entity *)event.packet->data;
 
-                        if (receivedPacket->fairyID == 1)
+                        if (receivedPacket->fairyID == 1) // Process fairy packet
                         {
                             processFairyPacket(event.packet);
+                        }
+                        else if (receivedPacket->powerupID == 1 || receivedPacket->powerupID == 2)
+                        {
+                            processPowerUpPacket(event.packet);
                         }
                         else
                         {

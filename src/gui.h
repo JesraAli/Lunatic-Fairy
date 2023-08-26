@@ -83,9 +83,15 @@ void processPlayerPacket(ENetPacket *packet);
 ENetPacket *fairyPackets(void);
 void processFairyPacket(ENetPacket *packet);
 
+ENetPacket *powerUpPackets(void);
+void processPowerUpPacket(ENetPacket *packet);
+
+
 void rendCopyPlayer2(void);
 void drawOpponentBullets(void);
 void drawOpponentDBullets(void);
+void drawOpponentPowerUp(void);
+
 
 void resetPlayer(void);
 

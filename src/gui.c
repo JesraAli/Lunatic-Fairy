@@ -725,6 +725,8 @@ void initPlayer()
     // Initial sprite velocity 0 (because keyboard controls it)
     player->x_vel = 0;
     player->y_vel = 0;
+
+    player->invincible = false;
 }
 
 /**Initialise Player2 Function*/
@@ -764,25 +766,30 @@ Entity initPlayer2()
     // Initial sprite velocity 0 (because keyboard controls it)
     opponentPlayer->x_vel = 0;
     opponentPlayer->y_vel = 0;
+
+    opponentPlayer->invincible = false;
 }
 
 /**Check if player collide with fairy*/
 int playerCollideFairy()
 {
-    Entity *f;
-
-    for (f = stage.fairyHead.next; f != NULL; f = f->next)
+    if (!player->invincible) // if player IS NOT invincible
     {
-        if (SDL_HasIntersection(&player->hitbox, &f->hitbox) == SDL_TRUE) // Check if Player Rect & fairy Rect intersect
+        Entity *f;
+
+        for (f = stage.fairyHead.next; f != NULL; f = f->next)
         {
-            // Set player & fairy life to 0 so it despawns
-            player = NULL;
-            f->life = 0;
-            playerLife--;
-            return true;
+            if (SDL_HasIntersection(&player->hitbox, &f->hitbox) == SDL_TRUE) // Check if Player Rect & fairy Rect intersect
+            {
+                // Set player & fairy life to 0 so it despawns
+                player = NULL;
+                f->life = 0;
+                playerLife--;
+                return true;
+            }
         }
+        return false;
     }
-    return false;
 }
 
 /**Check if player collide with powerUp*/
@@ -934,14 +941,18 @@ void manipulateAllBullets()
             eB = eBPrev;
         }
 
-        // If Enemy bullet HITS Player
-        if (SDL_HasIntersection(&eB->rect, &player->hitbox) == SDL_TRUE) // Check if Player Rect & enemy bullet Rect intersect
-        {
-            // Set player to NULL & enemy bullet life to 0 so it despawns
-            eB->life = 0;
-            player = NULL;
-            playerLife--;
-            break;
+        if (!player->invincible)
+        { // if player IS NOT invincible
+
+            // If Enemy bullet HITS Player
+            if (SDL_HasIntersection(&eB->rect, &player->hitbox) == SDL_TRUE) // Check if Player Rect & enemy bullet Rect intersect
+            {
+                // Set player to NULL & enemy bullet life to 0 so it despawns
+                eB->life = 0;
+                player = NULL;
+                playerLife--;
+                break;
+            }
         }
     }
 }
@@ -1018,7 +1029,6 @@ void drawDBullets()
     }
 }
 
-int powerup;
 /**Check if Bullet intersect / hit Fairy*/
 int bulletHit(Entity *b)
 {
@@ -1035,7 +1045,8 @@ int bulletHit(Entity *b)
             f->life = 0;
             spawnExplosion(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
 
-            if (returnServerVar() != NULL) // host creates the powerup packet and broadcast to second player
+            // check if Multiplayer && Host == true OR if its single-player mode
+            if ((returnMultiplayerStatus() == true && returnServerVar() != NULL) || returnMultiplayerStatus() == false) // host creates the powerup packet and broadcast to second player
             {
                 // Randomly spawn a powerUp
                 double chance = (double)rand() / (double)RAND_MAX;
@@ -1043,8 +1054,11 @@ int bulletHit(Entity *b)
                 {
                     spawnPowerUp(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
                     // printf("Host creating powerup packet (%d)\n", powerup);
-                    powerup++;
-                    powerUpPackets();
+
+                    if (multiplayer == true)
+                    {
+                        powerUpPackets();
+                    }
                 }
             }
 
@@ -1851,3 +1865,39 @@ void drawOpponentDBullets()
 //         SDL_RenderCopy(rend, oP->tex, NULL, &oP->rect);
 //     }
 // }
+
+void setInvincible()
+{
+    player->invincible = true;
+    player->invincibleCount = 180;
+}
+
+void updateInvincible()
+{
+    if (player->invincible == true)
+    {
+        player->invincibleCount--;
+
+        // Calculate flashing based on invincibleCount
+        bool shouldFlash = (player->invincibleCount / 10) % 2 == 0; // 10 == fast, increase to go slower, decrease to go faster
+
+        if (shouldFlash)
+        {
+            // SDL_SetTextureColorMod(player->tex, 255, 0, 0);
+            SDL_SetTextureColorMod(player->tex, 255, 255, 0);
+
+            // Apply a red tinge
+            SDL_SetTextureColorMod(player->tex, 255, 100, 100);
+        }
+        else
+        {
+            // Set back to original color
+            SDL_SetTextureColorMod(player->tex, 255, 255, 255);
+        }
+    }
+    if (player->invincibleCount == 0 || returnPlayerLife() == 0) // If count is 0 or player is dead, set invincible to false
+    {
+        player->invincible = false;
+        SDL_SetTextureColorMod(player->tex, 255, 255, 255);
+    }
+}

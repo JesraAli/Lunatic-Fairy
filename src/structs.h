@@ -28,6 +28,8 @@ typedef struct Entity
     int fairyID;
     int powerupID;
     int bulletType; // 2 == diagonal
+    bool invincible;
+    int invincibleCount;
     SDL_Texture *tex;
     SDL_Rect rect;
     SDL_Rect hitbox;

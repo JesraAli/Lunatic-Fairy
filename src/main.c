@@ -82,6 +82,8 @@ int main(int argc, char **argv)
 
     while (true)
     {
+        updateInvincible(); //Update player invincibility timer if player is invincible
+
         if (returnPlayerLife() == 0)
         {
             addHighscore(returnPlayerScore(), returnHighscoreList());
@@ -108,11 +110,13 @@ int main(int argc, char **argv)
             {
                 resetPlayer();
                 initPlayers();
+                setInvincible();
             }
             else
             {
                 resetStage();
                 initPlayers();
+                setInvincible();
             }
             continue;
         }
@@ -120,7 +124,7 @@ int main(int argc, char **argv)
         manipulateDBullet();
 
         manipulateFairy();
-        // fireEnemyBulletCall();
+        fireEnemyBulletCall();
 
         // Fairies: Want host player to create all the fairies, and send them to second player.
         // DONT want second player to create ANY fairies.
@@ -149,11 +153,13 @@ int main(int argc, char **argv)
             {
                 resetPlayer();
                 initPlayers();
+                setInvincible();
             }
             else
             {
                 resetStage();
                 initPlayers();
+                setInvincible();
             }
             continue;
         }
@@ -183,7 +189,7 @@ int main(int argc, char **argv)
         drawBullets();
         drawOpponentBullets();
 
-        // drawEnemyBullets();
+        drawEnemyBullets();
         drawFairy();
         drawEnemyExplosion();
         drawPowerUp();

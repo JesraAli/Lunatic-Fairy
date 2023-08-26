@@ -102,6 +102,9 @@ int main(int argc, char **argv)
 
             if (secondPlayerDead == true && hostPlayerDead == true)
             {
+                resetStage();
+                prepareScene(); // Reset screen
+                rendCopyBackground(); //Render background again
                 addHighscore(returnPlayerScore(), returnHighscoreList());
                 drawHighscores(returnHighscoreList());
                 presentScene();
@@ -110,7 +113,7 @@ int main(int argc, char **argv)
                 secondPlayerDead = false;
                 hostPlayerDead = false;
                 noLivesFlagCalled = true;
-                resetStage();
+                // resetStage();
                 restartGame(); // Restart the game
                 initPlayers();
             }
@@ -122,6 +125,7 @@ int main(int argc, char **argv)
                 addHighscore(returnPlayerScore(), returnHighscoreList());
                 drawHighscores(returnHighscoreList());
                 presentScene();
+                resetStage();
                 restartGame(); // Restart the game
                 initPlayers();
             }
@@ -144,7 +148,7 @@ int main(int argc, char **argv)
             if (returnMultiplayerStatus() == true)
             {
                 resetPlayer();
-                //Only re-initialise one player if the other player is dead
+                // Only re-initialise one player if the other player is dead
                 if (hostPlayerDead == true || secondPlayerDead == true)
                 {
                     initPlayer();
@@ -157,7 +161,8 @@ int main(int argc, char **argv)
             }
             else
             {
-                resetStage();
+                // resetStage();
+                resetFairyBullet(); // Only reset fairy bullet when player dies? Prevent screen overload?
                 initPlayers();
                 setInvincible();
             }
@@ -207,7 +212,8 @@ int main(int argc, char **argv)
             }
             else
             {
-                resetStage();
+                // resetStage();
+                resetFairyBullet();
                 initPlayers();
                 setInvincible();
             }

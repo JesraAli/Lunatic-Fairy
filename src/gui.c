@@ -23,7 +23,7 @@ SDL_Surface *surface;
 Entity *player, *opponentPlayer;
 Action action;
 Stage stage;
-Background *background, *title, *singlePlayerScreen, *multiPlayerScreen, *modeList, *modeEasy, *modeHard, *modeLunatic, *loading;
+Background *background, *title, *singlePlayerScreen, *multiPlayerScreen, *modeList, *modeEasy, *modeHard, *modeLunatic, *loading, *hardBackground;
 Mode *mode;
 
 SDL_Texture *bulletTexture;
@@ -582,6 +582,18 @@ void resetPlayer()
     initPlayer;
 }
 
+void resetFairyBullet()
+{
+    Entity *e;
+
+    while (stage.enemyBulletHead.next)
+    {
+        e = stage.enemyBulletHead.next;
+        stage.enemyBulletHead.next = e->next;
+        free(e);
+    }
+    stage.enemyBulletTail = &stage.enemyBulletHead;
+}
 /**Reset Stage Function*/
 void resetStage()
 {
@@ -646,13 +658,6 @@ void resetStage()
         free(e);
     }
 
-    // while (stage.opponentPowerUpHead.next)
-    // {
-    //     e = stage.opponentPowerUpHead.next;
-    //     stage.opponentPowerUpHead.next = e->next;
-    //     free(e);
-    // }
-
     initStage();
 }
 
@@ -669,11 +674,7 @@ void restartGame()
 
         if (restartEvent.key.keysym.scancode == SDL_SCANCODE_ESCAPE) // Go to title with ESCAPE key
         {
-            printf("restarted game and preparing scene\n");
-
             prepareScene();
-
-            // memset(&action, 0, sizeof(Action)); // Set action variables to 0
             titleLoop();
             break;
         }
@@ -1150,9 +1151,6 @@ void manipulatePowerUp()
     Entity *p, *prev;
     prev = &stage.powerUpHead;
 
-    // Entity *oP, *oPprev;
-    // oPprev = &stage.opponentPowerUpHead;
-
     // Player PowerUp Manipulation
     for (p = stage.powerUpHead.next; p != NULL; p = p->next)
     {
@@ -1175,28 +1173,6 @@ void manipulatePowerUp()
             p = prev;
         }
     }
-
-    // for (oP = stage.opponentPowerUpHead.next; oP != NULL; oP = oP->next)
-    // {
-    //     oP->x_pos += oP->x_vel / 60;
-    //     oP->y_pos += oP->y_vel / 60;
-
-    //     // Set the positions in the struct
-    //     oP->rect.y = oP->y_pos;
-    //     oP->rect.x = oP->x_pos;
-
-    //     // If goes beyond the top of the screen OR BulletLife = 0
-    //     if (oP->y_pos > 600 || oP->life == 0)
-    //     {
-    //         if (oP == stage.opponentPowerUpTail)
-    //         {
-    //             stage.opponentPowerUpTail = oPprev;
-    //         }
-    //         oPprev->next = oP->next;
-    //         free(oP);
-    //         oP = oPprev;
-    //     }
-    // }
 }
 
 void spawnPowerUp(int x, int y, int w, int h)
@@ -1560,7 +1536,6 @@ void drawText(int x, int y, int r, int g, int b, char *format, ...)
     char drawTextBuffer[1024];
 
     SDL_Texture *fontTexture = IMG_LoadTexture(rend, "img/font.png"); // Create texture for font
-                                                                      // SDL_QueryTexture(fontTexture, NULL, NULL, &rect.w, &rect.h);
 
     memset(&drawTextBuffer, '\0', sizeof(drawTextBuffer));
 
@@ -1686,10 +1661,7 @@ ENetPacket *DBulletPackets() // Loop through the linked list and create packets 
 // Function to process received bullet packet
 void processDBulletPacket(ENetPacket *packet)
 {
-
-    // Extract bullet data from the packet
     Entity *receivedDBullet = (Entity *)packet->data;
-    // Copy the received bullet data into a new local bullet entity (in case the recieved bullet state gets modified at any point)
     Entity *localDBullet = (Entity *)malloc(sizeof(Entity));
     memcpy(localDBullet, receivedDBullet, sizeof(Entity));
 
@@ -1819,23 +1791,10 @@ void processPowerUpPacket(ENetPacket *packet)
     {
         if (receivedPU->powerupID == 1)
         {
-            // printf("Player 2: added powerup from host\n");
-            // Add the local bullet to local bullet linked list
-            // stage.opponentPowerUpTail->next = localPU;
-            // stage.opponentPowerUpTail = localPU;
             stage.powerUpTail->next = localPU;
             stage.powerUpTail = localPU;
         }
     }
-    // else
-    // { // if player 1:
-    //     if (receivedPU->powerupID == 2)
-    //         printf("added powerup from player2\n");
-    //     {
-    //         stage.opponentPowerUpTail->next = localPU;
-    //         stage.opponentPowerUpTail = localPU;
-    //     }
-    // }
 }
 
 void rendCopyPlayer2()
@@ -1860,15 +1819,6 @@ void drawOpponentDBullets()
         SDL_RenderCopy(rend, DB->tex, NULL, &DB->rect);
     }
 }
-
-// void drawOpponentPowerUp(void)
-// {
-//     for (Entity *oP = stage.opponentPowerUpHead.next; oP != NULL; oP = oP->next)
-//     {
-//         oP->tex = powerUpTexture;
-//         SDL_RenderCopy(rend, oP->tex, NULL, &oP->rect);
-//     }
-// }
 
 void setInvincible()
 {

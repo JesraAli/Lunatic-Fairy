@@ -90,8 +90,6 @@ void processPowerUpPacket(ENetPacket *packet);
 void rendCopyPlayer2(void);
 void drawOpponentBullets(void);
 void drawOpponentDBullets(void);
-void drawOpponentPowerUp(void);
-
 
 void resetPlayer(void);
 
@@ -100,5 +98,9 @@ void updateMode(ENetPacket *packet);
 void setInvincible(void);
 void freeCurrentPlayer(void);
 void freeOpponentPlayer(void);
+
+void resetFairyBullet(void);
+
+void loadHardBackground();
 
 #endif

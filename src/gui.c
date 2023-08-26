@@ -1042,7 +1042,7 @@ int bulletHit(Entity *b)
                 if (chance < PUprobability)
                 {
                     spawnPowerUp(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
-                    printf("Host creating powerup packet (%d)\n", powerup);
+                    // printf("Host creating powerup packet (%d)\n", powerup);
                     powerup++;
                     powerUpPackets();
                 }
@@ -1316,7 +1316,7 @@ void manipulateFairy()
         }
         else if (f->leftDir == true)
         {
-            if (f->x_pos >=800 || f->life == 0) // If fairy x_pos is greater than 800 its off the screen
+            if (f->x_pos >= 800 || f->life == 0) // If fairy x_pos is greater than 800 its off the screen
             {
                 if (f == stage.fairyTail)
                 {
@@ -1649,6 +1649,7 @@ ENetPacket *DBulletPackets() // Loop through the linked list and create packets 
 
     for (DB = stage.DBulletHead.next; DB != NULL; DB = DB->next)
     {
+        DB->bulletType = 2;
         if (returnServerVar() == NULL)
         { // (aka if the client is NOT Running the server (aka player 2))
             DB->bulletID = 2;
@@ -1800,7 +1801,7 @@ void processPowerUpPacket(ENetPacket *packet)
     {
         if (receivedPU->powerupID == 1)
         {
-            printf("Player 2: added powerup from host\n");
+            // printf("Player 2: added powerup from host\n");
             // Add the local bullet to local bullet linked list
             // stage.opponentPowerUpTail->next = localPU;
             // stage.opponentPowerUpTail = localPU;

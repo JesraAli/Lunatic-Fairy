@@ -1,7 +1,9 @@
 # Lunatic Fairy
-Lunatic Fairy is an in development single player 2D shooter game, written in C using Simple DirectMedia Layer 2 (SDL2). 
+Lunatic Fairy is an in development 2D shooter game, written in C using Simple DirectMedia Layer 2 (SDL2) and ENet libraries. 
 
-The game is based off a popular japanese bullet-hell video game.
+It features a single-player mode and a two-player mode using a server-client connection. 
+
+The game is inspired by a popular japanese bullet-hell video game.
 
 
 <img src="https://github.com/JesraAli/Lunatic-Fairy/blob/main/img/trailer.gif" width="630" height="480"/>
@@ -15,6 +17,8 @@ The player has 3 lives, and must dodge the fairies bullets to prevent losing a l
 ## Building and Running
 
 ### Linux:
+(As of current development status, SDL2 and ENet must be installed to run the game)
+
 To compile:
 
 <!-- ```sh
@@ -45,6 +49,3 @@ Example of running the program:
 To control your character, use the ```WASD``` keys to move ```UP```, ```DOWN```, ```LEFT```, ```RIGHT``` respectively, or use the corresponding up/down/left/right keys.
 
 To fire a bullet, press ```Z```.
-
-## Multiplayer Mode:
-To activate multiplayer mode from the home screen, press ```M```.

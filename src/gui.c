@@ -23,7 +23,7 @@ SDL_Surface *surface;
 Entity *player, *opponentPlayer;
 Action action;
 Stage stage;
-Background *background, *title, *singlePlayerScreen, *multiPlayerScreen, *modeList, *modeEasy, *modeHard, *modeLunatic, *loading, *hardBackground;
+Background *background, *title, *singlePlayerScreen, *multiPlayerScreen, *modeList, *modeEasy, *modeHard, *modeLunatic, *loading;
 Mode *mode;
 
 SDL_Texture *bulletTexture;
@@ -165,7 +165,6 @@ void userInput()
         // Update positions (divide by 60 as only calculating 1/60th of a second)
         player->x_pos += player->x_vel / 60;
         player->y_pos += player->y_vel / 60;
-        // printf("Player->y_pos: %d\n",player->y_pos);
     }
 }
 
@@ -245,7 +244,7 @@ void titleLoop()
         if (event.type == SDL_MOUSEBUTTONDOWN)
         {
             // Single Player
-            if (event.motion.x >= 157 && event.motion.x <= 367 && event.motion.y >= 421 && event.motion.y <= 471) // check if it is in the desired area
+            if (event.motion.x >= 157 && event.motion.x <= 367 && event.motion.y >= 421 && event.motion.y <= 471) // Check if it is in the desired area
             {
                 multiplayer = false;
                 initModes();
@@ -259,15 +258,11 @@ void titleLoop()
                 multiplayer = true;
                 multiplayerCheck();
 
-                if (returnServerVar() != NULL) // AKA host is running  for 1st time
+                if (returnServerVar() != NULL) //  Aka host is running for 1st time
                 {
-                    // printf("HOST HOST HOST\n");
                     initModes();
                     presentModes();
 
-                    // while(1){
-
-                    // }
                     while (secondClientJoined != true)
                     {
                         SDL_Event event;
@@ -285,8 +280,6 @@ void titleLoop()
                 }
                 else
                 {
-                    // RETRIEVE mode->? from host, send to client, update mode->? for client.
-                    // printf("SEcCOND SECOND SECOND PLAYER\n");
                     loading = initSeperateBackground("img/loading.png");
                     SDL_RenderCopy(rend, loading->tex, NULL, &loading->rect);
                     SDL_RenderPresent(rend);
@@ -299,58 +292,6 @@ void titleLoop()
                 break;
             }
         }
-
-        // if (event.key.keysym.scancode == SDL_SCANCODE_RETURN)
-        // { // Go to screen with list of difficulties
-        //     initModes();
-        //     presentModes();
-        //     break;
-        // }
-
-        // if (event.key.keysym.scancode == SDL_SCANCODE_M)
-        // { // Go to screen with list of difficulties
-        //     multiplayer = true;
-        //     multiplayerCheck();
-
-        //     if (returnServerVar() != NULL) // AKA host is running  for 1st time
-        //     {
-        //         // printf("HOST HOST HOST\n");
-        //         initModes();
-        //         presentModes();
-
-        //         // while(1){
-
-        //         // }
-        //         while (secondClientJoined != true)
-        //         {
-        //             SDL_Event event;
-        //             // Handle SDL events
-        //             while (SDL_PollEvent(&event))
-        //             {
-        //                 if (event.type == SDL_QUIT)
-        //                 {
-        //                     end();
-        //                 }
-        //             }
-        //             // Delay for a short period before checking again
-        //             SDL_Delay(100); // Delay for 100 milliseconds
-        //         }
-        //     }
-        //     else
-        //     {
-        //         // RETRIEVE mode->? from host, send to client, update mode->? for client.
-        //         // printf("SEcCOND SECOND SECOND PLAYER\n");
-        //         loading = initSeperateBackground("img/loading.png");
-        //         SDL_RenderCopy(rend, loading->tex, NULL, &loading->rect);
-        //         SDL_RenderPresent(rend);
-
-        //         while (modeIsSet != true)
-        //         {
-        //             loadingScreen();
-        //         }
-        //     }
-        //     break;
-        // }
     }
 }
 
@@ -371,12 +312,12 @@ void initModes()
 
     modeList = initSeperateBackground("img/modes.png");
 
-    // Init hover-effect for modes
+    // Initialise hover-effect for modes
     modeEasy = initSeperateBackground("img/modeEasy.png");
     modeHard = initSeperateBackground("img/modeHard.png");
     modeLunatic = initSeperateBackground("img/modeLunatic.png");
 
-    // Init mode
+    // Initialise mode
     mode = malloc(sizeof(Mode));
     memset(mode, 0, sizeof(Mode));
 }
@@ -488,8 +429,8 @@ void presentModes()
 
     if (multiplayer == true)
     {
-        // CHECK IF SECOND CLIENT HAS JOINED, WHEN THEY HAVE, CREATE THE PACKETS!!
         loadingScreen();
+        // Check if second client joined, and if so create packets
         while (secondClientJoined != true)
         {
             SDL_Event event;
@@ -504,7 +445,6 @@ void presentModes()
             // Delay for a short period before checking again
             SDL_Delay(100); // Delay for 100 milliseconds
         }
-        // Send the packet of the mode to second usersendUpdateToServerAndBroadcast
         ENetPacket *modePacket = enet_packet_create(mode, sizeof(Mode), ENET_PACKET_FLAG_RELIABLE);
         sendUpdateToServerAndBroadcast(modePacket, PLAYER_CHANNEL);
     }
@@ -556,15 +496,15 @@ int returnMode() // 1: Easy, 2: Hard, 3: Lunatic
 void initStage()
 {
     memset(&stage, 0, sizeof(Stage)); // Set stage variables to 0
+    // Initialise Linked Lists
     stage.bulletTail = &stage.bulletHead;
-    stage.opponentBulletTail = &stage.opponentBulletHead; // Initialise opponents bullet linked list
+    stage.opponentBulletTail = &stage.opponentBulletHead;
     stage.DBulletTail = &stage.DBulletHead;
     stage.opponentDBulletTail = &stage.opponentDBulletHead;
     stage.fairyTail = &stage.fairyHead;
     stage.enemyBulletTail = &stage.enemyBulletHead;
     stage.explosionTail = &stage.explosionHead;
     stage.powerUpTail = &stage.powerUpHead;
-    // stage.opponentPowerUpTail = &stage.opponentPowerUpHead;
     fairySpawnTimer = 0;
     memset(&action, 0, sizeof(Action)); // Set action variables to 0
     bulletDiagonal = 0;
@@ -599,9 +539,11 @@ void resetStage()
 {
     Entity *e;
 
-    free(player); // Free player1
+    // Free Players
+    free(player);
     free(opponentPlayer);
 
+    // Free Linked Lists
     while (stage.bulletHead.next)
     {
         e = stage.bulletHead.next;
@@ -609,7 +551,7 @@ void resetStage()
         free(e);
     }
 
-    while (stage.opponentBulletHead.next) // free opponent bullet linked list
+    while (stage.opponentBulletHead.next)
     {
         e = stage.opponentBulletHead.next;
         stage.opponentBulletHead.next = e->next;
@@ -623,7 +565,7 @@ void resetStage()
         free(e);
     }
 
-    while (stage.opponentDBulletHead.next) // free Dopponent D Bullet linked list
+    while (stage.opponentDBulletHead.next)
     {
         e = stage.opponentDBulletHead.next;
         stage.opponentDBulletHead.next = e->next;
@@ -708,7 +650,6 @@ void initPlayer()
     {
         player->tex = IMG_LoadTexture(rend, "img/sprite.png");
     }
-    // player->tex = IMG_LoadTexture(rend, "img/sprite.png"); // Create texture for player
 
     // Get & Scale dimensions of texture:
     SDL_QueryTexture(player->tex, NULL, NULL, &player->rect.w, &player->rect.h);
@@ -721,8 +662,7 @@ void initPlayer()
 
     // Sprite in centre of screen at start
     player->x_pos = (WINDOW_WIDTH - player->rect.w) / 2;
-    // player->y_pos = (WINDOW_HEIGHT - player->rect.h) / 2;
-    player->y_pos = 400;
+    player->y_pos = 400; // Position player slightly below centre point
 
     player->rect.x = player->x_pos;
     player->rect.y = player->y_pos;
@@ -746,7 +686,7 @@ Entity initPlayer2()
     {
         opponentPlayer->tex = IMG_LoadTexture(rend, "img/sprite.png");
     }
-    else // if player 1:
+    else // If player 1:
     {
         opponentPlayer->tex = IMG_LoadTexture(rend, "img/touhouSprite.png");
     }
@@ -762,13 +702,12 @@ Entity initPlayer2()
 
     // Sprite in centre of screen at start
     opponentPlayer->x_pos = (WINDOW_WIDTH - opponentPlayer->rect.w) / 2;
-    // opponentPlayer->y_pos = (WINDOW_HEIGHT - opponentPlayer->rect.h) / 2;
     opponentPlayer->y_pos = 400;
 
     opponentPlayer->rect.x = opponentPlayer->x_pos;
     opponentPlayer->rect.y = opponentPlayer->y_pos;
 
-    // Initial sprite velocity 0 (because keyboard controls it)
+    // Initial sprite velocity 0
     opponentPlayer->x_vel = 0;
     opponentPlayer->y_vel = 0;
 
@@ -778,7 +717,7 @@ Entity initPlayer2()
 /**Check if player collide with fairy*/
 int playerCollideFairy()
 {
-    if (!player->invincible) // if player IS NOT invincible
+    if (!player->invincible) // If player IS not invincible
     {
         Entity *f;
 
@@ -807,8 +746,7 @@ int playerCollidePowerUp()
         if (SDL_HasIntersection(&player->hitbox, &p->rect) == SDL_TRUE) // Check if Player Rect & powerUp Rect intersect
         {
             bulletDiagonal = 10;
-            // Set powerUp life to 0 so it despawns
-            p->life = 0;
+            p->life = 0; // Set powerUp life to 0 so it despawns
             return true;
         }
     }
@@ -850,7 +788,7 @@ void fireDiagonalBullet(int x_vel, int y_vel, int distance)
 
     DBullet->tex = IMG_LoadTexture(rend, "img/bulletPU.png");
     SDL_QueryTexture(DBullet->tex, NULL, NULL, &DBullet->rect.w, &DBullet->rect.h);
-    DBullet->rect.w += 15; // Scales image up
+    DBullet->rect.w += 15;
     DBullet->rect.h += 15;
 
     stage.DBulletTail->next = DBullet;
@@ -971,7 +909,7 @@ void manipulateDBullet()
     Entity *oDB, *oDBprev;
     oDBprev = &stage.opponentDBulletHead;
 
-    // DIAGONAL Bullet Manipulation
+    // Diagonal Bullet Manipulation
     for (DB = stage.DBulletHead.next; DB != NULL; DB = DB->next)
     {
         DB->x_pos += DB->x_vel / 30;
@@ -1038,8 +976,7 @@ void drawDBullets()
 int bulletHit(Entity *b)
 {
     Entity *f;
-    // PUprobability = 0.2; // Probability of a powerUp spawning
-    PUprobability = 0.5; // Probability of a powerUp spawning
+    PUprobability = 0.2; // Probability of a powerUp spawning
 
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
@@ -1058,7 +995,6 @@ int bulletHit(Entity *b)
                 if (chance < PUprobability)
                 {
                     spawnPowerUp(f->x_pos, f->y_pos, f->rect.w, f->rect.h);
-                    // printf("Host creating powerup packet (%d)\n", powerup);
 
                     if (multiplayer == true)
                     {
@@ -1161,7 +1097,7 @@ void manipulatePowerUp()
         p->rect.y = p->y_pos;
         p->rect.x = p->x_pos;
 
-        // If goes beyond the top of the screen
+        // If powerUP goes beyond the top of the screen
         if (p->y_pos > 600 || p->life == 0)
         {
             if (p == stage.powerUpTail)
@@ -1468,7 +1404,7 @@ void collisionDetection()
     if (player != NULL)
     {
         if (player->x_pos <= 0)
-            player->x_pos = 0; // RCHANNEL_IDeset positions to keep in window
+            player->x_pos = 0; // Set positions to keep in window
         if (player->y_pos <= 0)
             player->y_pos = 0;
         if (player->x_pos >= WINDOW_WIDTH - player->rect.w)
@@ -1495,7 +1431,7 @@ void collisionDetection()
         fireDiagonalBullet(-260, -SPEED - 500, -5);
         if (returnMultiplayerStatus() == true)
         {
-            DBulletPackets(); // Create the opponent bullet packets when bullet created
+            DBulletPackets(); 
         }
 
         // Allow normal bullets to fire when Diagonal Bullets are firing
@@ -1504,7 +1440,7 @@ void collisionDetection()
             fireBullet();
             if (returnMultiplayerStatus() == true)
             {
-                bulletPackets(); // Create the opponent bullet packets when bullet created
+                bulletPackets(); 
             }
         }
     }
@@ -1514,13 +1450,12 @@ void collisionDetection()
         fireBullet();
         if (returnMultiplayerStatus() == true)
         {
-            bulletPackets(); // Create the opponent bullet packets when bullet created
+            bulletPackets();
         }
     }
 
     if (bulletDiagonal == -1)
     {
-        printf("it is -1 now :(\n");
         bulletDiagonal = 10;
     }
 }
@@ -1592,7 +1527,7 @@ ENetPacket *bulletPackets() // Loop through the linked list and create packets f
     for (b = stage.bulletHead.next; b != NULL; b = b->next)
     {
         if (returnServerVar() == NULL)
-        { // (aka if the client is NOT Running the server (aka player 2))
+        { // (aka if the client is NOT running the server (aka player 2))
             b->bulletID = 2;
         }
         else
@@ -1652,7 +1587,6 @@ ENetPacket *DBulletPackets() // Loop through the linked list and create packets 
             DB->bulletID = 1; //((Means it must be the host calling the function, so playerID is 1))
         }
 
-        // DB->bulletType = 2;
         ENetPacket *packet = enet_packet_create(DB, sizeof(Entity), ENET_PACKET_FLAG_RELIABLE);
         sendUpdateToServerAndBroadcast(packet, BULLETANDSTATUS_CHANNEL);
     }
@@ -1670,7 +1604,6 @@ void processDBulletPacket(ENetPacket *packet)
     {
         if (receivedDBullet->bulletID == 1)
         {
-            // Add the local bullet to local bullet linked list
             stage.opponentDBulletTail->next = localDBullet;
             stage.opponentDBulletTail = localDBullet;
         }
@@ -1837,10 +1770,9 @@ void updateInvincible()
 
         if (shouldFlash)
         {
-            // SDL_SetTextureColorMod(player->tex, 255, 0, 0);
             SDL_SetTextureColorMod(player->tex, 255, 255, 0);
 
-            // Apply a red tinge
+            // Apply red tinge
             SDL_SetTextureColorMod(player->tex, 255, 100, 100);
         }
         else
@@ -1867,5 +1799,5 @@ void freeOpponentPlayer()
 {
     free(opponentPlayer);
     opponentPlayer = malloc(sizeof(Entity));
-    memset(opponentPlayer, 0, sizeof(Entity)); // Set player variables to 0
+    memset(opponentPlayer, 0, sizeof(Entity));
 }

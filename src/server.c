@@ -23,7 +23,6 @@ bool secondClientJoined = false;
 void runServer(int serverPort)
 {
     int clientCount = 0;
-    // int secondClientJoined = false;
 
     if (enet_initialize())
     {
@@ -63,11 +62,9 @@ void runServer(int serverPort)
                 clientCount++;
                 if (clientCount == 2)
                 {
-                    // secondClientJoined = true;
                     sendSecondClientStatus(true); // Notify clients that the second client has joined
                     ENetAddress serverAddress = server->address;
-                    // sendServerPointer(event.peer, &serverAddress);
-                    // sendServerPointer(event.peer); // Send the server pointer to the second client
+
                 }
                 event.peer->data = (void *)"Client information";
                 break;
@@ -78,21 +75,17 @@ void runServer(int serverPort)
                 if (event.channelID == PLAYER_CHANNEL)
                 {
 
-                    if (event.packet->dataLength == sizeof(Mode)) // is mode packet
+                    if (event.packet->dataLength == sizeof(Mode)) // Is mode packet
                     {
-                        // printf("Server: recieved mode packet\n");
                         ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
 
                         // Broadcast the received packet to other clients
                         enet_host_broadcast(server, PLAYER_CHANNEL, broadcastPacket);
                     }
-                    else // is player packet
+                    else // Is player packet
                     {
                         /*This loop putting x and y into weird positions*/
-                        // printf("Server: Player Packet Request Recieved\n");
                         ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
-
-                        // Broadcast the received packet to other clients
                         enet_host_broadcast(server, PLAYER_CHANNEL, broadcastPacket);
                     }
                     enet_packet_destroy(event.packet);
@@ -100,9 +93,7 @@ void runServer(int serverPort)
 
                 if (event.channelID == BULLETANDSTATUS_CHANNEL)
                 {
-                    // printf("Server: Bullet Packet Request Recieved\n");
                     ENetPacket *broadcastPacket = enet_packet_create(event.packet->data, event.packet->dataLength, ENET_PACKET_FLAG_RELIABLE);
-                    // Broadcast the received packet to other clients
                     enet_host_broadcast(server, BULLETANDSTATUS_CHANNEL, broadcastPacket);
                     enet_packet_destroy(event.packet);
                 }
@@ -134,11 +125,3 @@ void sendSecondClientStatus(bool status)
     ENetPacket *packet = enet_packet_create(&status, sizeof(bool), ENET_PACKET_FLAG_RELIABLE);
     enet_host_broadcast(server, BULLETANDSTATUS_CHANNEL, packet);
 }
-
-// void sendServerPointer(ENetPeer *clientPeer, const ENetAddress *serverAddress)
-// {
-//     // Create  packet containing the server pointer
-//     ENetPacket *packet = enet_packet_create(&server, sizeof(ENetHost *), ENET_PACKET_FLAG_RELIABLE);
-
-//     enet_peer_send(clientPeer, BULLETANDSTATUS_CHANNEL, packet);
-// }

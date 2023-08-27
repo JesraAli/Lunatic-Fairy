@@ -38,7 +38,6 @@ typedef struct Entity
 
 typedef struct
 { // Linked lists for players, bullets, fairies, explosions
-    // Entity playerHead, *playerTail;
     Entity bulletHead, *bulletTail;
     Entity opponentBulletHead, *opponentBulletTail;
     Entity DBulletHead, *DBulletTail;

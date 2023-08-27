@@ -5,7 +5,7 @@
 #include <enet/enet.h>
 #include "client.h"
 #include <pthread.h>
-#include "server.h" // Include the modified header
+#include "server.h"
 
 #define PLAYER_CHANNEL 1
 
@@ -18,7 +18,6 @@ bool secondPlayerDead;
 bool hostPlayerDead;
 bool noLivesFlagCalled;
 
-// Define the structure to pass arguments to the server thread
 struct ServerThreadArgs
 {
     ENetHost *server;
@@ -27,7 +26,7 @@ struct ServerThreadArgs
 
 void *serverThreadFunction(void *arg)
 {
-    int serverPort = *((int *)arg); // Get the server port from the argument
+    int serverPort = *((int *)arg); // Retrieve server port from the argument
 
     runServer(serverPort);
     return NULL;
@@ -35,7 +34,7 @@ void *serverThreadFunction(void *arg)
 
 void *clientThreadFunction(void *arg)
 {
-    int serverPort = *((int *)arg); // Get the server port from the argument
+    int serverPort = *((int *)arg); // Retrieve server port from the argument
 
     runClient(serverPort);
     return NULL;
@@ -134,7 +133,6 @@ int main(int argc, char **argv)
         // prepareScene(); // Prepare Scene (Background & Clear)
 
         userInput();
-
         rendCopyBackground();
 
         // Collision detected with bounds (detect if sprite is going out of  window)
@@ -219,7 +217,7 @@ int main(int argc, char **argv)
             }
             continue;
         }
-        // // Create & send packets for all entities
+        // // Create & send player packets
         if (returnMultiplayerStatus() == true)
         {
             playerPackets();
@@ -327,7 +325,7 @@ void playerNoLivesFunction()
     }
     else
     {
-        playerNoLives = 1; // host
+        playerNoLives = 1; // Host
     }
     ENetPacket *playerNoLivesPacket = enet_packet_create(&playerNoLives, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
     sendUpdateToServerAndBroadcast(playerNoLivesPacket, PLAYER_CHANNEL);

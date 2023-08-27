@@ -5,5 +5,4 @@
 void runServer(int serverPort);
 ENetHost* returnServerVar(void);
 void sendSecondClientStatus(bool status);
-// void sendServerPointer(ENetPeer *clientPeer, const ENetAddress *serverAddress)
 #endif

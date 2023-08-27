@@ -17,7 +17,6 @@
 
 extern bool secondClientJoined;
 ENetPeer *peer;
-// ENetHost *receivedServer;
 ENetHost *client;
 
 void runClient(int serverPort)
@@ -49,7 +48,6 @@ void runClient(int serverPort)
     address.port = serverPort;
 
     // printf("Client: Connecting to server at  port %d...\n", address.port);
-    // ENetPeer *peer = enet_host_connect(client, &address, 2, 0);
     peer = enet_host_connect(client, &address, 2, 0);
 
     if (peer == NULL)
@@ -91,12 +89,10 @@ void runClient(int serverPort)
                 {
                     if (event.packet->dataLength == sizeof(bool))
                     {
-                        // printf("Client: STATUS Packet data recieved\n");
                         signalSecondClientJoined(); // Signal the gui.c function
                     }
                     else if (event.packet->dataLength == sizeof(Entity))
                     {
-                        // printf("Client: BULLET Packet data recieved\n");
                         // Process bullet packet and update local game state
 
                         Entity *receivedBullet = (Entity *)event.packet->data;
@@ -138,8 +134,6 @@ void runClient(int serverPort)
                         }
                         else
                         {
-
-                            // printf("Client: PLAYER Packet data recieved\n");
                             // Process Player packet and update local game state
                             processPlayerPacket(event.packet);
                         }
@@ -159,10 +153,6 @@ void runClient(int serverPort)
         }
     }
 }
-
-// ENetHost *returnClientServer(){
-//     return receivedServer;
-// }
 
 void sendUpdateToServerAndBroadcast(ENetPacket *packet, int channel)
 {

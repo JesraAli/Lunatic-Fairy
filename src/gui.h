@@ -101,6 +101,4 @@ void freeOpponentPlayer(void);
 
 void resetFairyBullet(void);
 
-void loadHardBackground();
-
 #endif

@@ -639,16 +639,16 @@ void initPlayer()
     {
         if (returnServerVar() == NULL)
         {
-            player->tex = IMG_LoadTexture(rend, "img/touhouSprite.png");
+            player->tex = IMG_LoadTexture(rend, "img/sprite2.png");
         }
         else
         {
-            player->tex = IMG_LoadTexture(rend, "img/sprite.png");
+            player->tex = IMG_LoadTexture(rend, "img/sprite1.png");
         }
     }
     else
     {
-        player->tex = IMG_LoadTexture(rend, "img/sprite.png");
+        player->tex = IMG_LoadTexture(rend, "img/sprite1.png");
     }
 
     // Get & Scale dimensions of texture:
@@ -684,11 +684,11 @@ Entity initPlayer2()
     // If player2:
     if (returnServerVar() == NULL)
     {
-        opponentPlayer->tex = IMG_LoadTexture(rend, "img/sprite.png");
+        opponentPlayer->tex = IMG_LoadTexture(rend, "img/sprite1.png");
     }
     else // If player 1:
     {
-        opponentPlayer->tex = IMG_LoadTexture(rend, "img/touhouSprite.png");
+        opponentPlayer->tex = IMG_LoadTexture(rend, "img/sprite2.png");
     }
 
     // Get & Scale dimensions of texture:

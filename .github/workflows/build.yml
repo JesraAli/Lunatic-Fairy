@@ -23,6 +23,8 @@ jobs:
       run: mkdir include
     - name: Move SDL2 headers to include folder
       run: mv SDL2-2.28.2/include/* include/
+    - name: Add include folder to LD path
+      run: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:include/
   
     - name: download SDL2 image
       run: |

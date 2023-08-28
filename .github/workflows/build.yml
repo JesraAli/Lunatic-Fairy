@@ -39,7 +39,9 @@ jobs:
         cd ..
     - name: compile
       run: |
-        gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
+        #gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
+        gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main -Iinclude `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
+
     - name: Upload Linux version
       uses: actions/upload-artifact@v3.1.2
       with:

@@ -17,12 +17,12 @@ jobs:
       run: |
         wget https://github.com/libsdl-org/SDL/releases/download/release-2.28.2/SDL2-2.28.2.tar.gz
         tar -xzf SDL2-2.28.2.tar.gz
-        #export PATH=$PATH:SDL2-2.28.2/include
-
-    - name: Create include folder
-      run: mkdir include
-    - name: Move SDL2 headers to include folder
-      run: mv SDL2-2.28.2/include/* include/
+        cd SDL2-2.28.2
+        ./configure
+        make
+        sudo make install
+        cd ..
+        
     - name: Add include folder to LD path
       run: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:include/
   

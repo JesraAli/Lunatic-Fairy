@@ -2,7 +2,7 @@
 #define libs
 #include <SDL.h>
 #include <SDL_timer.h>
-#include <SDL2/SDL_image.h>
+#include <SDL_image.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

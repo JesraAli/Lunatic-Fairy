@@ -28,10 +28,14 @@ jobs:
   
     - name: download SDL2 image
       run: |
-        wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.3/SDL2_image-2.6.3.tar.gz
-        tar -xzf SDL2_image-2.6.3.tar.gz
-    - name: Move SDL_image headers to include folder
-      run: mv SDL2_image-2.6.3/* include/
+        wget https://github.com/libsdl-org/SDL_image/archive/refs/tags/release-2.6.3.tar.gz
+        tar -xzf SDL_image-release-2.6.3.tar.gz
+        ./configure
+        make
+        sudo make install
+        cd ..
+    # - name: Move SDL_image headers to include folder
+    #   run: mv SDL2_image-2.6.3/* include/
 
     - name: download enet
       run: |
@@ -46,8 +50,6 @@ jobs:
       run: |
         #gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
         gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main -Iinclude `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
-        #gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main -Iinclude `sdl2-config --cflags --libs` -lm -lenet
-        #gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main -Iinclude `sdl2-config --cflags` -Linclude `sdl2-config --libs` -lSDL2_image -lm -lenet
 
     - name: Upload Linux version
       uses: actions/upload-artifact@v3.1.2

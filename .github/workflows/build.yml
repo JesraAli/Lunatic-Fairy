@@ -1,0 +1,41 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: download SDL2 libraries
+      run: |
+        wget https://github.com/libsdl-org/SDL/releases/download/release-2.28.2/SDL2-2.28.2.tar.gz
+        tar -xzfv SDL2-2.28.2.tar.gz
+        export PATH=$PATH;SDL2-2.28.2/includes
+    - name: download SDL2 image
+      run: |
+        wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.3/SDL2_image-2.6.3.tar.gz
+        tar -xzfv SDL2_image-2.6.3.tar.gz
+    - name: download enet
+      run: |
+        git clone https://github.com/lsalzman/enet
+        cd enet
+        autoreconf -vfi
+        ./configure && make && make install
+        cd ..
+    - name: compile
+      run: |
+        gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
+    - name: Upload Linux version
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        # Artifact name
+        name: lunatic_fairy # optional, default is artifact
+        # A file, directory or wildcard pattern that describes what to upload
+        path: main

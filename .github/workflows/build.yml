@@ -28,8 +28,8 @@ jobs:
   
     - name: download SDL2 image
       run: |
-        wget https://github.com/libsdl-org/SDL_image/archive/refs/tags/release-2.6.3.tar.gz
-        tar -xzf SDL_image-release-2.6.3.tar.gz
+       wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.3/SDL2_image-2.6.3.tar.gz
+        tar -xzf SDL2_image-2.6.3.tar.gz
         ./configure
         make
         sudo make install

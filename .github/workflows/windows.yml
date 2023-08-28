@@ -15,26 +15,22 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Download SDL2
-    # You may pin to the exact commit or the version.
-    # uses: albin-johansson/download-sdl2@d4e9339339b31b200ada5c7530d5eadad01576c2
-      uses: albin-johansson/download-sdl2@v2
+      uses: albin-johansson/download-sdl2@latest
       with:
         # The version of SDL2 that will be downloaded
         version: 2.28.2
         # Where the SDL2 sources will be saved
-        sources_destination: SDL2_Sources
+        sources_destination: .
         # Where the SDL2 runtime binaries will be saved
         binaries_destination: .
   
     - name: Download SDL2_image
-      # You may pin to the exact commit or the version.
-      # uses: albin-johansson/download-sdl2-image@4351247ed4fa2a10344d76071bd2567e2ca56c98
-      uses: albin-johansson/download-sdl2-image@v2
+      uses: albin-johansson/download-sdl2-image@latest
       with:
         # The version of SDL2_image that will be downloaded
         version: 2.6.3
         # Where the SDL2_image sources will be saved
-        sources_destination: SDL2_Sources
+        sources_destination: .
         # Where the SDL2_image runtime binaries will be saved
         binaries_destination: .
 

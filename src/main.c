@@ -17,7 +17,7 @@
 void multiplayerCheck();
 
 #ifdef _WIN32
-HANDLE serverThread; //HANDLE: represents an object (e.g threads), like a pointer to the object
+HANDLE serverThread; // HANDLE: represents an object (e.g threads), like a pointer to the object
 HANDLE clientThread;
 #else
 pthread_t serverThread;
@@ -35,10 +35,13 @@ struct ServerThreadArgs
 };
 
 #ifdef _WIN32
-//DWORD: Data type representing 32-bit unsigned integer
-//WINAPI: Specifies how function parameters are passed & how function return value is handled
-//LPVOID: (Long Pointer to VOID), represents pointer to memory of ANY data type
 DWORD WINAPI serverThreadFunction(LPVOID lpParam);
+DWORD WINAPI clientThreadFunction(LPVOID lpParam);
+
+// DWORD: Data type representing 32-bit unsigned integer
+// WINAPI: Specifies how function parameters are passed & how function return value is handled
+// LPVOID: (Long Pointer to VOID), represents pointer to memory of ANY data type
+DWORD WINAPI serverThreadFunction(LPVOID lpParam)
 {
     int serverPort = *((int *)lpParam); // Retrieve server port from the argument
 
@@ -46,7 +49,7 @@ DWORD WINAPI serverThreadFunction(LPVOID lpParam);
     return 0;
 }
 
-DWORD WINAPI clientThreadFunction(LPVOID lpParam);
+DWORD WINAPI clientThreadFunction(LPVOID lpParam)
 {
     int serverPort = *((int *)lpParam); // Retrieve server port from the argument
 
@@ -54,6 +57,7 @@ DWORD WINAPI clientThreadFunction(LPVOID lpParam);
     return 0;
 }
 #else
+
 void *serverThreadFunction(void *arg)
 {
     int serverPort = *((int *)arg); // Retrieve server port from the argument

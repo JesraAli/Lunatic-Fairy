@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gui.h"
+#include "libs.h"
 // #include <pthread.h>
 
 // Different channels for packet passing

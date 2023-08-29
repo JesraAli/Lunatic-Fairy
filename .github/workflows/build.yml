@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Linux
 
 on:
   push:
@@ -17,19 +17,26 @@ jobs:
       run: |
         wget https://github.com/libsdl-org/SDL/releases/download/release-2.28.2/SDL2-2.28.2.tar.gz
         tar -xzf SDL2-2.28.2.tar.gz
-        #export PATH=$PATH:SDL2-2.28.2/include
-
-    - name: Create include folder
-      run: mkdir include
-    - name: Move SDL2 headers to include folder
-      run: mv SDL2-2.28.2/include/* include/
+        cd SDL2-2.28.2
+        ./configure
+        make
+        sudo make install
+        cd ..
+        
+    - name: Add include folder to LD path
+      run: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:include/
   
     - name: download SDL2 image
       run: |
-        wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.3/SDL2_image-2.6.3.tar.gz
+       wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.6.3/SDL2_image-2.6.3.tar.gz
         tar -xzf SDL2_image-2.6.3.tar.gz
-    - name: Move SDL_image headers to include folder
-      run: mv SDL2_image-2.6.3/* include/
+        cd SDL2_image-2.6.3
+        ./configure
+        make
+        sudo make install
+        cd ..
+    # - name: Move SDL_image headers to include folder
+    #   run: mv SDL2_image-2.6.3/* include/
 
     - name: download enet
       run: |
@@ -42,10 +49,8 @@ jobs:
         cd ..
     - name: compile
       run: |
-        #gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
         gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main -Iinclude `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
-        #gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main -Iinclude `sdl2-config --cflags --libs` -lm -lenet
-        #gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main -Iinclude `sdl2-config --cflags` -Linclude `sdl2-config --libs` -lSDL2_image -lm -lenet
+        chmod a+x main
 
     - name: Upload Linux version
       uses: actions/upload-artifact@v3.1.2
@@ -53,4 +58,6 @@ jobs:
         # Artifact name
         name: lunatic_fairy # optional, default is artifact
         # A file, directory or wildcard pattern that describes what to upload
-        path: main
+        path: |
+          main
+          img

@@ -53,8 +53,6 @@ jobs:
       with:
         # The target architecture
         arch: x86
-        # The path to the Visual Studio installation
-        vs-path: .
         # Windows SDK to use
         sdk: 8.1
         # Use Visual Studio libraries with Spectre mitigations
@@ -64,9 +62,9 @@ jobs:
         # Build for Universal Windows Platform
         uwp: true
         # The environment variable to store the path to vcvarsall.bat in
-        export-path-to-vcvarsall: .
+        export-path-to-vcvarsall: .\VC\Auxiliary\Build\
         # The environment variable to store the path to the Visual Studio installation in
-        export-path-to-vs: .
+        export-path-to-vs: 'VS2019'
 
     
     - name: compile

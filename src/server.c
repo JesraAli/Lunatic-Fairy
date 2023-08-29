@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "structs.h"
+#include "server.h"
 
 // Different channels for packet passing
 #define BULLETANDSTATUS_CHANNEL 0

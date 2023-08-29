@@ -9,4 +9,4 @@ void multiplayerCheck(void);
 void processPlayerNoLives(ENetPacket *packet);
 void playerNoLivesFunction(void);
 
-#endif  MAIN_H
+#endif MAIN_H

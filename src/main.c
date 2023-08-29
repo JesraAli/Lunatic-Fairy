@@ -18,8 +18,13 @@
 void multiplayerCheck();
 
 #ifdef _WIN32
-HANDLE serverThread; // HANDLE: represents an object (e.g threads), like a pointer to the object
-HANDLE clientThread;
+DWORD WINAPI WserverThreadFunction(LPVOID lpParam);
+DWORD WINAPI WclientThreadFunction(LPVOID lpParam);
+#endif
+
+#ifdef _WIN32
+HANDLE WserverThread; // HANDLE: represents an object (e.g threads), like a pointer to the object
+HANDLE WclientThread;
 #else
 pthread_t serverThread;
 pthread_t clientThread;
@@ -36,13 +41,10 @@ struct ServerThreadArgs
 };
 
 #ifdef _WIN32
-DWORD WINAPI serverThreadFunction(LPVOID lpParam);
-DWORD WINAPI clientThreadFunction(LPVOID lpParam);
-
 // DWORD: Data type representing 32-bit unsigned integer
 // WINAPI: Specifies how function parameters are passed & how function return value is handled
 // LPVOID: (Long Pointer to VOID), represents pointer to memory of ANY data type
-DWORD WINAPI serverThreadFunction(LPVOID lpParam)
+DWORD WINAPI WserverThreadFunction(LPVOID lpParam)
 {
     int serverPort = *((int *)lpParam); // Retrieve server port from the argument
 
@@ -50,7 +52,7 @@ DWORD WINAPI serverThreadFunction(LPVOID lpParam)
     return 0;
 }
 
-DWORD WINAPI clientThreadFunction(LPVOID lpParam)
+DWORD WINAPI WclientThreadFunction(LPVOID lpParam)
 {
     int serverPort = *((int *)lpParam); // Retrieve server port from the argument
 
@@ -291,8 +293,8 @@ int main(int argc, char **argv)
     if (returnMultiplayerStatus() == true)
     {
 #ifdef _WIN32
-        CloseHandle(serverThread);
-        CloseHandle(clientThread);
+        CloseHandle(WserverThread);
+        CloseHandle(WclientThread);
 #else
         pthread_join(serverThread, NULL); // Join server thread
         pthread_join(clientThread, NULL);
@@ -312,19 +314,21 @@ void multiplayerCheck()
 
 #ifdef _WIN32
         // Create Windows Server Thread
-        serverThread = CreateThread(NULL, 0, serverThreadFunction, &serverPort, 0, NULL);
+        WserverThread = CreateThread(NULL, 0, WserverThreadFunction, &serverPort, 0, NULL);
 
-        if (serverThread == NULL)
+        if (WserverThread == NULL)
         {
             printf("Failed to create windows server thread.\n");
-            return;
+            return 1;
         }
 
         // Create Windows Client Thread
-        clientThread = CreateThread(NULL, 0, clientThreadFunction, &serverPort, 0, NULL);
+        WclientThread = CreateThread(NULL, 0, WclientThreadFunction, &serverPort, 0, NULL);
+
+        if (WclientThread == NULL)
         {
             printf("Failed to create windows client thread.\n");
-            return;
+            return 1;
         }
 #else
         if (pthread_create(&serverThread, NULL, serverThreadFunction, &serverPort) != 0)

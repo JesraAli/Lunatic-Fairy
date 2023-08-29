@@ -35,14 +35,11 @@ jobs:
         binaries_destination: .
 
     - name: download enet
-      # run: |
-      #   wget http://enet.bespin.org/download/enet-1.3.17.tar.gz
-      #   tar -xzf enet-1.3.17.tar.gz
-
       shell: powershell
       run: |
         Invoke-WebRequest -Uri "http://enet.bespin.org/download/enet-1.3.17.tar.gz" `
                           -OutFile enet-1.3.17.tar.gz
+        cd .
         7z x -y enet-1.3.17.tar.gz
 
 

@@ -63,5 +63,5 @@ jobs:
         name: lunatic_fairy # optional, default is artifact
         # A file, directory or wildcard pattern that describes what to upload
         path: |
-          main.exe
+          src/main.exe
           img

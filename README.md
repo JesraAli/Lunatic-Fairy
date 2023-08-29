@@ -17,23 +17,12 @@ The player has 3 lives, and must dodge the fairies bullets to prevent losing a l
 ## Building and Running
 
 ### Linux:
-(As of current development status, SDL2 and ENet must be installed to run the game)
 
-To compile:
+To download:
 
-<!-- ```sh
-gcc src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm
-``` -->
-```sh
-gcc src/server.c src/client.c src/gui.c src/main.c src/highscoreInfo.c -o main `sdl2-config --cflags --libs` -lSDL2_image -lm -lenet
-```
 
 
 To run:
-
-<!-- ```sh
-./main
-``` -->
 
 ```sh
 ./main -server <serverAddress> -port <portNumber>

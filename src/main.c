@@ -4,8 +4,13 @@
 #include "highscoreInfo.h"
 #include <enet/enet.h>
 #include "client.h"
-#include <pthread.h>
 #include "server.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
 
 #define PLAYER_CHANNEL 1
 
@@ -102,8 +107,8 @@ int main(int argc, char **argv)
             if (secondPlayerDead == true && hostPlayerDead == true)
             {
                 resetStage();
-                prepareScene(); // Reset screen
-                rendCopyBackground(); //Render background again
+                prepareScene();       // Reset screen
+                rendCopyBackground(); // Render background again
                 addHighscore(returnPlayerScore(), returnHighscoreList());
                 drawHighscores(returnHighscoreList());
                 presentScene();
@@ -268,6 +273,21 @@ void multiplayerCheck()
     {
         printf("Multiplayer Mode: true\n");
         // Create Server Thread
+
+#ifdef _WIN32
+        //if (pthread_create(&serverThread, NULL, serverThreadFunction, &serverPort) != 0)
+        {
+            printf("Failed to create server thread.\n");
+            return;
+        }
+
+        // Create Client Thread
+        //if (pthread_create(&clientThread, NULL, clientThreadFunction, &serverPort) != 0)
+        {
+            printf("Failed to create client thread.\n");
+            return;
+        }
+#else
         if (pthread_create(&serverThread, NULL, serverThreadFunction, &serverPort) != 0)
         {
             printf("Failed to create server thread.\n");
@@ -281,6 +301,7 @@ void multiplayerCheck()
             return;
         }
 
+#endif
         SDL_Delay(10); // Delay so the server and client can initialise
     }
     else

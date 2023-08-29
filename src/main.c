@@ -5,6 +5,7 @@
 #include <enet/enet.h>
 #include "client.h"
 #include "server.h"
+#include "main.h"
 
 #ifdef _WIN32
 #include <windows.h>

@@ -9,7 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gui.h"
-#include "libs.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#include <winsock2.h>
+#pragma comment (lib,"ws2_32.lib")
+#endif
 // #include <pthread.h>
 
 // Different channels for packet passing

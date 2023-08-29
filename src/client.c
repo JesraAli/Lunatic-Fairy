@@ -1,14 +1,15 @@
-#include "enet/enet.h"
-#include "enet/list.h"
-#include "enet/protocol.h"
-#include "enet/time.h"
-#include "enet/types.h"
-#include "enet/utility.h"
-#include "enet/unix.h"
+// #include "enet/enet.h"
+// #include "enet/list.h"
+// #include "enet/protocol.h"
+// #include "enet/time.h"
+// #include "enet/types.h"
+// #include "enet/utility.h"
+// #include "enet/unix.h"
+#include <enet/enet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "gui.h"
-#include <pthread.h>
+// #include <pthread.h>
 
 // Different channels for packet passing
 #define BULLETANDSTATUS_CHANNEL 0

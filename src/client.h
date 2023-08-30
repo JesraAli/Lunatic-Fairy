@@ -4,4 +4,5 @@
 #include <enet/enet.h>
 void runClient(int serverPort);
 void sendUpdateToServerAndBroadcast(ENetPacket *packet, int channel);
+void stopClientRunning(void);
 #endif

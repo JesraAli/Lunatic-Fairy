@@ -11,7 +11,7 @@
 #include <windows.h>
 #include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib")
-#pragma comment (lib,"Winmm.lib")
+#pragma comment(lib, "Winmm.lib")
 #else
 #include <pthread.h>
 #endif
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
                 noLivesFlagCalled = true;
                 // resetStage();
                 restartGame(); // Restart the game
-                initPlayers();
+                // initPlayers();
             }
         }
         else
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
                 presentScene();
                 resetStage();
                 restartGame(); // Restart the game
-                initPlayers();
+                // initPlayers();
             }
         }
 
@@ -398,4 +398,54 @@ void playerNoLivesFunction()
     sendUpdateToServerAndBroadcast(playerNoLivesPacket, PLAYER_CHANNEL);
     noLivesFlagCalled = true;
     freeCurrentPlayer();
+}
+
+/*Restart Game Function*/
+void restartGame()
+{
+    SDL_Event restartEvent;
+    while (SDL_WaitEvent(&restartEvent))
+    {
+        if (restartEvent.type == SDL_QUIT)
+        {
+            end();
+        }
+
+        if (restartEvent.key.keysym.scancode == SDL_SCANCODE_ESCAPE) // Go to title with ESCAPE key
+        {
+            prepareScene();
+
+            // Close Server Thread
+            stopServer();
+#ifdef _WIN32
+            CloseHandle(WserverThread);
+#else
+            pthread_join(serverThread, NULL); // Join server thread
+#endif
+            // Close Client Thread
+            stopClient();
+
+#ifdef _WIN32
+            CloseHandle(WclientThread);
+#else
+            pthread_join(clientThread, NULL);
+#endif
+
+            resetSecondClientStatus();
+            titleLoop();
+            SDL_ShowCursor(0); // Hide cursor
+            initPlayers();
+            break;
+        }
+    }
+}
+
+void stopServer()
+{
+    stopServerRunning();
+}
+
+void stopClient()
+{
+    stopClientRunning();
 }

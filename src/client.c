@@ -13,8 +13,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
-#pragma comment (lib,"ws2_32.lib")
-#pragma comment (lib,"Winmm.lib")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Winmm.lib")
 #endif
 // #include <pthread.h>
 
@@ -26,6 +26,7 @@
 extern bool secondClientJoined;
 ENetPeer *peer;
 ENetHost *client;
+bool isClientRunning;
 
 void runClient(int serverPort)
 {
@@ -49,6 +50,8 @@ void runClient(int serverPort)
         printf("Client: An error occurred while trying to create an ENet client host.\n");
         return;
     }
+
+    isClientRunning = true;
 
     ENetAddress address;
 
@@ -84,13 +87,14 @@ void runClient(int serverPort)
     }
 
     // While loop:
-    while (1)
+    while (isClientRunning)
     {
         while (enet_host_service(client, &event, 10) > 0)
         {
             switch (event.type)
             {
             case ENET_EVENT_TYPE_RECEIVE:
+            {
 
                 // Handle received packets based on packet type
                 if (event.channelID == BULLETANDSTATUS_CHANNEL)
@@ -149,14 +153,23 @@ void runClient(int serverPort)
                 }
                 enet_packet_destroy(event.packet);
                 break;
-
+            }
             case ENET_EVENT_TYPE_DISCONNECT:
+            {
                 printf("Client: Disconnected.\n");
                 break;
                 event.peer->data = NULL;
                 break;
+            }
             default:
+            {
                 break;
+            }
+                if (!isClientRunning)
+                {
+                    printf("Client is no longer running\n");
+                    break;
+                }
             }
         }
     }
@@ -169,4 +182,9 @@ void sendUpdateToServerAndBroadcast(ENetPacket *packet, int channel)
         // Create an update packet and send it to the server
         enet_peer_send(peer, channel, packet);
     }
+}
+
+void stopClientRunning(void)
+{
+    isClientRunning = false;
 }

@@ -16,8 +16,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
-#pragma comment (lib,"ws2_32.lib")
-#pragma comment (lib,"Winmm.lib")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Winmm.lib")
 #endif
 
 // Different channels for packet passing
@@ -28,6 +28,7 @@
 ENetHost *server;
 
 bool secondClientJoined = false;
+bool isServerRunning;
 
 void runServer(int serverPort)
 {
@@ -57,9 +58,11 @@ void runServer(int serverPort)
         return;
     }
 
+    isServerRunning = true;
+
     printf("Server: started and listening on port %d.\n", address.port);
 
-    while (1)
+    while (isServerRunning)
     {
         while (enet_host_service(server, &event, 10) > 0)
         {
@@ -71,9 +74,9 @@ void runServer(int serverPort)
                 clientCount++;
                 if (clientCount == 2)
                 {
+                    printf("client count is 2\n");
                     sendSecondClientStatus(true); // Notify clients that the second client has joined
                     ENetAddress serverAddress = server->address;
-
                 }
                 event.peer->data = (void *)"Client information";
                 break;
@@ -117,6 +120,12 @@ void runServer(int serverPort)
             default:
             {
             }
+
+                if (!isServerRunning)
+                {
+                    clientCount = 0;
+                    break;
+                }
             }
         }
     }
@@ -133,4 +142,9 @@ void sendSecondClientStatus(bool status)
 {
     ENetPacket *packet = enet_packet_create(&status, sizeof(bool), ENET_PACKET_FLAG_RELIABLE);
     enet_host_broadcast(server, BULLETANDSTATUS_CHANNEL, packet);
+}
+
+void stopServerRunning()
+{
+    isServerRunning = false;
 }

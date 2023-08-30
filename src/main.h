@@ -8,5 +8,8 @@ void multiplayerCheck(void);
 
 void processPlayerNoLives(ENetPacket *packet);
 void playerNoLivesFunction(void);
+void restartGame(void);
+void stopServer(void);
+void stopClient(void);
 
 #endif MAIN_H

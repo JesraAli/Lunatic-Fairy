@@ -6,6 +6,7 @@
 #include <enet/enet.h>
 
 void signalSecondClientJoined(void);
+void resetSecondClientStatus(void);
 
 int load(void);
 void userInput(void);
@@ -23,7 +24,7 @@ int returnMode(void);
 void initStage(void);
 
 void resetStage(void);
-void restartGame(void);
+// void restartGame(void);
 
 void initPlayers(void);
 void initPlayer(void);

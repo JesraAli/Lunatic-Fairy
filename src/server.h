@@ -7,4 +7,6 @@
 void runServer(int serverPort);
 ENetHost* returnServerVar(void);
 void sendSecondClientStatus(bool status);
+void stopServerRunning(void);
+
 #endif

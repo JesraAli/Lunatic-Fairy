@@ -8,8 +8,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
-#pragma comment (lib,"ws2_32.lib")
-#pragma comment (lib,"Winmm.lib")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Winmm.lib")
 #endif
 
 // Different channels for packet passing
@@ -22,6 +22,11 @@ extern bool secondClientJoined;
 void signalSecondClientJoined()
 {
     secondClientJoined = true;
+}
+
+void resetSecondClientStatus()
+{
+    secondClientJoined = false;
 }
 
 // Variables
@@ -264,6 +269,7 @@ void titleLoop()
             else if (event.motion.x >= 455 && event.motion.x <= 653 && event.motion.y >= 417 && event.motion.y <= 466)
             {
                 multiplayer = true;
+                printf("multiplayer checking\n");
                 multiplayerCheck();
 
                 if (returnServerVar() != NULL) //  Aka host is running for 1st time
@@ -611,25 +617,27 @@ void resetStage()
     initStage();
 }
 
-/*Restart Game Function*/
-void restartGame()
-{
-    SDL_Event restartEvent;
-    while (SDL_WaitEvent(&restartEvent))
-    {
-        if (restartEvent.type == SDL_QUIT)
-        {
-            end();
-        }
+// /*Restart Game Function*/
+// void restartGame()
+// {
+//     SDL_Event restartEvent;
+//     while (SDL_WaitEvent(&restartEvent))
+//     {
+//         if (restartEvent.type == SDL_QUIT)
+//         {
+//             end();
+//         }
 
-        if (restartEvent.key.keysym.scancode == SDL_SCANCODE_ESCAPE) // Go to title with ESCAPE key
-        {
-            prepareScene();
-            titleLoop();
-            break;
-        }
-    }
-}
+//         if (restartEvent.key.keysym.scancode == SDL_SCANCODE_ESCAPE) // Go to title with ESCAPE key
+//         {
+//             prepareScene();
+//             titleLoop();
+//             SDL_ShowCursor(0); // Hide cursor
+//             initPlayers();
+//             break;
+//         }
+//     }
+// }
 
 void initPlayers()
 {
@@ -1314,6 +1322,7 @@ void fireEnemyBulletCall()
     {
         if (player != NULL && --f->reload <= 0) // if reload is <=0 and player is alive:
         {
+            printf("Before creating enemy bullet\n");
             fireEnemyBullet(f);
         }
     }
@@ -1348,6 +1357,7 @@ void fireEnemyBullet(Entity *f)
     // Set the positions in the struct
     enemyBullet->rect.y = enemyBullet->y_pos;
     enemyBullet->rect.x = enemyBullet->x_pos;
+    printf("Created Enemy Bullet\n");
 }
 
 /*Draw enemy bullets*/
@@ -1355,7 +1365,9 @@ void drawEnemyBullets()
 {
     for (Entity *b = stage.enemyBulletHead.next; b != NULL; b = b->next)
     {
+        printf("Before rendering copy Enemy Bullets\n");
         SDL_RenderCopy(rend, b->tex, NULL, &b->rect);
+        printf("After rendering copy enemy bullet\n");
     }
 }
 
@@ -1439,7 +1451,7 @@ void collisionDetection()
         fireDiagonalBullet(-260, -SPEED - 500, -5);
         if (returnMultiplayerStatus() == true)
         {
-            DBulletPackets(); 
+            DBulletPackets();
         }
 
         // Allow normal bullets to fire when Diagonal Bullets are firing
@@ -1448,7 +1460,7 @@ void collisionDetection()
             fireBullet();
             if (returnMultiplayerStatus() == true)
             {
-                bulletPackets(); 
+                bulletPackets();
             }
         }
     }

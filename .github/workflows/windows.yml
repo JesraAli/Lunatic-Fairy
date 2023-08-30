@@ -51,11 +51,10 @@ jobs:
         # The target architecture
         arch: x64
 
-    - name: Copy DLLs
+    - name: Copy DLLs to main directory
       run: |
-        mkdir dlls
-        copy SDL2-2.28.2\lib\x64\SDL2.dll dlls
-        copy SDL2_image-2.6.3\lib\x64\SDL2_image.dll dlls
+        copy SDL2-2.28.2\lib\x64\SDL2.dll .
+        copy SDL2_image-2.6.3\lib\x64\SDL2_image.dll .
       
     - name: compile
       run: |
@@ -70,4 +69,6 @@ jobs:
         path: |
           main.exe
           img
-          dlls
+          SDL2.dll
+          SDL2_image.dll
+          

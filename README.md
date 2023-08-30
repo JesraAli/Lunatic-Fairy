@@ -20,17 +20,39 @@ The player has 3 lives, and must dodge the fairies bullets to prevent losing a l
 
 To download:
 
+-Download from ```Releases``` (When the release is out, currently not yet!)
 
 
 To run:
 
 ```sh
+#Run this command if running ./main gives the following output: "./main: Permission denied"
+chmod a+x main 
+
 ./main -server <serverAddress> -port <portNumber>
 ```
 
 Example of running the program:
 ```sh
 ./main -server 192.124.1.332 -port 2000
+```
+
+<br>
+
+### Windows:
+
+To download:
+
+-Download from ```Releases``` (When the release is out, currently not yet!)
+
+To run:
+```sh
+main.exe -server <serverAddress> -port <portNumber>
+```
+
+Example of running the program:
+```sh
+main.exe -server 192.124.1.332 -port 2000
 ```
 
 ## Controls:

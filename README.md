@@ -6,7 +6,7 @@ It features a single-player mode and a two-player mode using a server-client con
 The game is inspired by a popular japanese bullet-hell video game.
 
 
-<img src="https://github.com/JesraAli/Lunatic-Fairy/blob/main/img/trailer.gif" width="630" height="480"/>
+<img src="https://github.com/JesraAli/Lunatic-Fairy/blob/main/gif/trailer.gif" width="630" height="480"/>
 
 
 ## Objective

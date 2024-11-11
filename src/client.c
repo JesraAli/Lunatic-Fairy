@@ -124,8 +124,10 @@ void runClient(int serverPort)
                 // Handle received packets based on packet type
                 if (event.channelID == PLAYER_CHANNEL)
                 {
+                    printf("HELLOOOOOOOOOOOOOOOOOOOOOOOO");
                     if (event.packet->dataLength == sizeof(Mode))
                     {
+                        printf("SHOULD BE UPDATING THE MODES????????????");
                         updateMode(event.packet);
                     }
                     else if (event.packet->dataLength == sizeof(int))

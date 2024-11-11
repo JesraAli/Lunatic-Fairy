@@ -459,6 +459,7 @@ void presentModes()
             // Delay for a short period before checking again
             SDL_Delay(100); // Delay for 100 milliseconds
         }
+        printf("SENDING MODE RN!!!!!!!!");
         ENetPacket *modePacket = enet_packet_create(mode, sizeof(Mode), ENET_PACKET_FLAG_RELIABLE);
         sendUpdateToServerAndBroadcast(modePacket, PLAYER_CHANNEL);
     }
@@ -466,6 +467,7 @@ void presentModes()
 
 void updateMode(ENetPacket *packet)
 {
+    printf("SHOULD UPDATE MODE FOR 2ND PLAYER?????????????????????????????");
     if (returnServerVar() == NULL)
     {
         initModes();

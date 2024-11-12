@@ -345,6 +345,7 @@ Background *initSeperateBackground(char *imgTex)
     background->rect.w = WINDOW_WIDTH;
     background->rect.h = WINDOW_HEIGHT;
     background->tex = IMG_LoadTexture(rend, imgTex);
+    print("initiated background");
     return background;
 }
 void presentModes()
@@ -459,7 +460,6 @@ void presentModes()
             // Delay for a short period before checking again
             SDL_Delay(100); // Delay for 100 milliseconds
         }
-        printf("SENDING MODE RN!!!!!!!!");
         ENetPacket *modePacket = enet_packet_create(mode, sizeof(Mode), ENET_PACKET_FLAG_RELIABLE);
         sendUpdateToServerAndBroadcast(modePacket, PLAYER_CHANNEL);
     }
@@ -467,7 +467,6 @@ void presentModes()
 
 void updateMode(ENetPacket *packet)
 {
-    printf("SHOULD UPDATE MODE FOR 2ND PLAYER?????????????????????????????");
     if (returnServerVar() == NULL)
     {
         initModes();
@@ -476,16 +475,21 @@ void updateMode(ENetPacket *packet)
         if (receivedMode->easy == true)
         {
             mode->easy = true;
+            printf("initiating easy\n");
             background = initSeperateBackground("img/easyB.png");
         }
         else if (receivedMode->hard == true)
         {
             mode->hard = true;
+            printf("initiating hard");
+
             background = initSeperateBackground("img/hardB.png");
         }
         else if (receivedMode->lunatic == true)
         {
             mode->lunatic = true;
+            printf("initiating lunatic");
+
             background = initSeperateBackground("img/lunaticB.png");
         }
     }
@@ -1324,7 +1328,7 @@ void fireEnemyBulletCall()
     {
         if (player != NULL && --f->reload <= 0) // if reload is <=0 and player is alive:
         {
-            printf("Before creating enemy bullet\n");
+            // printf("Before creating enemy bullet\n");
             fireEnemyBullet(f);
         }
     }
@@ -1359,7 +1363,7 @@ void fireEnemyBullet(Entity *f)
     // Set the positions in the struct
     enemyBullet->rect.y = enemyBullet->y_pos;
     enemyBullet->rect.x = enemyBullet->x_pos;
-    printf("Created Enemy Bullet\n");
+    // printf("Created Enemy Bullet\n");
 }
 
 /*Draw enemy bullets*/
@@ -1367,9 +1371,9 @@ void drawEnemyBullets()
 {
     for (Entity *b = stage.enemyBulletHead.next; b != NULL; b = b->next)
     {
-        printf("Before rendering copy Enemy Bullets\n");
+        // printf("Before rendering copy Enemy Bullets\n");
         SDL_RenderCopy(rend, b->tex, NULL, &b->rect);
-        printf("After rendering copy enemy bullet\n");
+        // printf("After rendering copy enemy bullet\n");
     }
 }
 
@@ -1381,6 +1385,7 @@ void prepareScene()
 
 void presentScene()
 {
+    printf("presenting scene\n");
     SDL_RenderPresent(rend);
 }
 
@@ -1401,6 +1406,7 @@ int returnFairySpawnTimer()
 
 void rendCopyBackground()
 {
+    printf("rendered background copy\n");
     SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
 }
 

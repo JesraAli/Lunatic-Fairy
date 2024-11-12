@@ -302,9 +302,7 @@ void titleLoop()
                     {
                         loadingScreen();
                     }
-                    rendCopyBackground();
-                    presentScene();
-
+                    SDL_Delay(100);
                 }
                 break;
             }
@@ -478,7 +476,6 @@ void updateMode(ENetPacket *packet)
         if (receivedMode->easy == true)
         {
             mode->easy = true;
-            printf("initiating easy\n");
             background = initSeperateBackground("img/easyB.png");
         }
         else if (receivedMode->hard == true)

@@ -302,7 +302,6 @@ void titleLoop()
                     {
                         loadingScreen();
                     }
-                    SDL_Delay(100);
                 }
                 break;
             }

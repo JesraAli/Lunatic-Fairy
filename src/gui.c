@@ -345,7 +345,6 @@ Background *initSeperateBackground(char *imgTex)
     background->rect.w = WINDOW_WIDTH;
     background->rect.h = WINDOW_HEIGHT;
     background->tex = IMG_LoadTexture(rend, imgTex);
-    printf("initiated background");
     return background;
 }
 void presentModes()
@@ -472,6 +471,10 @@ void updateMode(ENetPacket *packet)
         initModes();
 
         Mode *receivedMode = (Mode *)packet->data;
+        printf("Easy mode: %s\n", receivedMode->easy ? "true" : "false");
+        printf("hard mode: %s\n", receivedMode->hard ? "true" : "false");
+        printf("lunatic mode: %s\n", receivedMode->lunatic ? "true" : "false");
+
         if (receivedMode->easy == true)
         {
             mode->easy = true;
@@ -491,6 +494,11 @@ void updateMode(ENetPacket *packet)
             printf("initiating lunatic");
 
             background = initSeperateBackground("img/lunaticB.png");
+        }
+        else{
+            printf("else of updateMode");
+            background = initSeperateBackground("img/easyB.png");
+
         }
     }
     modeIsSet = true;
@@ -1385,7 +1393,6 @@ void prepareScene()
 
 void presentScene()
 {
-    printf("presenting scene\n");
     SDL_RenderPresent(rend);
 }
 
@@ -1406,7 +1413,6 @@ int returnFairySpawnTimer()
 
 void rendCopyBackground()
 {
-    printf("rendered background copy\n");
     SDL_RenderCopy(rend, background->tex, NULL, &background->rect);
 }
 

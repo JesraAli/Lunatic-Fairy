@@ -1321,6 +1321,7 @@ void fireEnemyBulletCall()
     Entity *f;
     for (f = stage.fairyHead.next; f != NULL; f = f->next)
     {
+        printf("f->reload: %d\n", --f->reload);
         if (player != NULL && --f->reload <= 0) // if reload is <=0 and player is alive:
         {
             // printf("Before creating enemy bullet\n");

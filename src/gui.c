@@ -345,7 +345,7 @@ Background *initSeperateBackground(char *imgTex)
     background->rect.w = WINDOW_WIDTH;
     background->rect.h = WINDOW_HEIGHT;
     background->tex = IMG_LoadTexture(rend, imgTex);
-    print("initiated background");
+    printf("initiated background");
     return background;
 }
 void presentModes()

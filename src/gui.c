@@ -302,6 +302,9 @@ void titleLoop()
                     {
                         loadingScreen();
                     }
+                    rendCopyBackground();
+                    presentScene();
+
                 }
                 break;
             }
@@ -471,9 +474,6 @@ void updateMode(ENetPacket *packet)
         initModes();
 
         Mode *receivedMode = (Mode *)packet->data;
-        printf("Easy mode: %s\n", receivedMode->easy ? "true" : "false");
-        printf("hard mode: %s\n", receivedMode->hard ? "true" : "false");
-        printf("lunatic mode: %s\n", receivedMode->lunatic ? "true" : "false");
 
         if (receivedMode->easy == true)
         {
@@ -484,21 +484,12 @@ void updateMode(ENetPacket *packet)
         else if (receivedMode->hard == true)
         {
             mode->hard = true;
-            printf("initiating hard");
-
             background = initSeperateBackground("img/hardB.png");
         }
         else if (receivedMode->lunatic == true)
         {
             mode->lunatic = true;
-            printf("initiating lunatic");
-
             background = initSeperateBackground("img/lunaticB.png");
-        }
-        else{
-            printf("else of updateMode");
-            background = initSeperateBackground("img/easyB.png");
-
         }
     }
     modeIsSet = true;
